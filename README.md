@@ -57,36 +57,50 @@ This isn’t about replacing Compose. It’s about not having to build a custom 
 
 ## Usage
 
-Where you want to add your script, create your script, for example `containup.py`: 
+### Minimalist usage
 
 ```python
 #!/usr/bin/env python3
-from containup import Stack
-from mypasswordservice import passwords
-import sys
 
+# Elements to import
+from containup import Stack, ServiceCfg, containup_cli
+
+# Configure logging so you can have log output as you wish
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s %(name)s [%(levelname)s] %(message)s"
+)
+
+# This is your part where your get things in your environment
+# or remote services
 password = passwords.find("mybddpassword")
 
-stack = Stack("mystack")
+# We parse command ligne arguments automatically. 
+# You can read your own arguments inside config.extra_args. 
+# You can also parse you own arguments, for example with Python's argparse
+config = containup_cli()
+
+# Define your service, volumes, networks, like you do with docker-compose
+
+stack = Stack("mystack", config)
 stack.volume("dbdata", driver="local")
 stack.network("backend")
-stack.service(
-    "db",
+stack.service(ServiceCfg(
+    name="db",
     image="postgres:15",
     volumes=["dbdata:/var/lib/postgresql/data"],
     networks=["backend"]
-)
-stack.service(
-    "app",
+))
+stack.service(ServiceCfg(
+    name="app",
     image="myorg/myapp:latest",
     depends_on=["db"],
     networks=["backend"],
     environment={"DATABASE_URL": f"postgres://user:{password}@db:5432/db"}
-)
+))
 
-def __main__(args):
-    # here, delegate command line handling to containup
-    stack.run(args)
+# Run the commands on the stack
+stack.run(args)
 ```
 
 Don't forget to add `containup-py` where your script shall live. 

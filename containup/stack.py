@@ -189,7 +189,7 @@ class Stack:
 def get_docker_volumes(client: docker.DockerClient) -> list[Volume]:
     return client.volumes.list()  # type: ignore[reportUnnecessaryCast]
 
-def cli() -> argparse.Namespace: 
+def containup_cli() -> argparse.Namespace: 
     parser = argparse.ArgumentParser(prog=sys.argv[0])
     parser.add_argument('--version', action = 'version', version=f'%(prog)s using containup {VERSION}')
     subparsers = parser.add_subparsers(dest='command', required=True)

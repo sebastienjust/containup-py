@@ -1,1 +1,1 @@
-from .stack import Stack, ServiceCfg, cli
+from .stack import Stack, ServiceCfg, containup_cli
