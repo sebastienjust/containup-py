@@ -57,7 +57,29 @@ This isn’t about replacing Compose. It’s about not having to build a custom 
 
 ## Usage
 
-### Minimalist usage
+### Create your script and use containup
+
+In any directory, create your file (we like to call them `containup-stack.py`
+but it can be whatever you want).
+
+Make the file executable if needed (`chmod u+x ./containup-stack.py`)
+
+Make sure you install `containup`either globally on the machine : 
+
+```bash
+pip install git+https://github.com/sebastienjust/containup-py.git
+```
+or with a local `venv` to not pollute the host with extra stuff. 
+
+```bash
+python -m venv .venv
+source .venv/bin/activate  # Unix/macOS
+## .venv\Scripts\activate    # Windows
+pip install --upgrade pip
+pip install git+https://github.com/sebastienjust/containup-py.git
+```
+
+### Script example
 
 ```python
 #!/usr/bin/env python3
@@ -71,20 +93,34 @@ logging.basicConfig(
     format="%(asctime)s %(name)s [%(levelname)s] %(message)s"
 )
 
-# This is your part where your get things in your environment
-# or remote services
-password = passwords.find("mybddpassword")
-
-# We parse command ligne arguments automatically. 
-# You can read your own arguments inside config.extra_args. 
-# You can also parse you own arguments, for example with Python's argparse
+# Tell containup to handle the command line. It will parse what it needs
+# then give you back your own "extra arguments" in config.extra_args. 
+# Then, you can parse them with, for example with Python's argparse
 config = containup_cli()
+
+# This is your moment, your business logic. You grab what you need from your 
+# machine, remote services, command-line arguments, environment variables, 
+# whatever you need.
+password = passwords.find("mybddpassword")
 
 # Define your service, volumes, networks, like you do with docker-compose
 
+# Create the stack (think of a docker-compose file)
 stack = Stack("mystack", config)
+
+# Then, add elements. Order doesn't matter
+
+# If you need add one or more volumes (you can use "if", "for loops")
+# Default behaviour is to create them if they not exist, or else, reuse them.
 stack.volume("dbdata", driver="local")
+
+# If you need add one or more networks (you can use "if", "for loops")
+# Default behaviour is to create them if they not exist, or else, reuse them.
 stack.network("backend")
+
+# Add your services, syntax try to stick with docker-compose
+# All the lib is strongly typed (if you use Pylance for example, 
+# no worry, your IDE will help autocompletion)
 stack.service(ServiceCfg(
     name="db",
     image="postgres:15",
@@ -99,43 +135,28 @@ stack.service(ServiceCfg(
     environment={"DATABASE_URL": f"postgres://user:{password}@db:5432/db"}
 ))
 
-# Run the commands on the stack
+# Now that we have the stack declared, we can run the commands on the stack
 stack.run(args)
 ```
 
-Don't forget to add `containup-py` where your script shall live. 
+### Use your script
 
 ```bash
-python -m venv .venv
-source .venv/bin/activate  # Unix/macOS
-# .venv\Scripts\activate    # Windows
-
-pip install --upgrade pip
-pip install git+https://github.com/sebastienjust/containup-py.git
+# Starts everything
+./containup-stack.py up
+# Stops everything
+./containup-stack.py down
+# Starts only myservice
+./containup-stack.py up myservice
+# Stops only myservice
+./containup-stack.py down myservice
+# Get logs of myservice
+./containup-stack.py logs myservice
+# Starts everything and give yourself parameters
+# you should not need a lot of parameters since your script can get what it
+# needs programmatically. 
+./containup-stack.py up -- --myprofile=staging
 ```
-
-Run it with 
-
-```
-python3 stack.py up
-```
-
-stop with 
-
-```
-python3 stack.py up
-```
-
-or make it shorter (if you added shebang and chmod u+x the script)
-
-```
-./stack.py up
-./stack.py down
-./stack.py down myservice
-./stack.py up myservice
-./stack.py logs myservice
-```
-You can add any logic you want: fetch secrets, inspect the system, change parameters on the fly — it's just Python.
 
 ## Project layout
 This repo follows standard Python packaging practices:
