@@ -4,18 +4,19 @@ import time
 import requests
 import logging
 import sys
-import argparse
 
 from typing import Optional, TypedDict, NotRequired, Literal, cast
 from dataclasses import dataclass, field
 from docker.models.volumes import Volume
 from docker.errors import DockerException
+from .cli import Config
 
 # TODO get that from elswhere
 VERSION = "0.1.0"
 
 # Initialize logger for this lib. Don't force the logger
 logger = logging.getLogger(__name__)
+
 
 class _RestartPolicy(TypedDict):
     MaximumRetryCount: NotRequired[int]
@@ -37,13 +38,13 @@ class ServiceCfg:
 
 
 class Stack:
-    def __init__(self, name: str, args: argparse.Namespace):
+    def __init__(self, name: str, args: Config):
         self.name = name
         self.client: docker.DockerClient = docker.from_env()
         self.volumes: dict[str, str] = {}
         self.networks: dict[str, str] = {}
         self.services: dict[str, ServiceCfg] = {}
-        self.args: argparse.Namespace = args
+        self.args: Config = args
 
     def volume(self, name: str):
         self.volumes[name] = name
@@ -71,7 +72,7 @@ class Stack:
         self._ensure_networks()
         targets = (
             self.services.values()
-            if services is None
+            if not services
             else (self.services[k] for k in services)
         )
         for cfg in targets:
@@ -112,7 +113,7 @@ class Stack:
     def down(self, services: Optional[list[str]] = None) -> None:
         targets = (
             self.services
-            if services is None
+            if not services 
             else {k: self.services[k] for k in services}
         )
         for name, cfg in targets.items():
@@ -173,11 +174,10 @@ class Stack:
 
     # Handle command line parsing and launches the commands on the stack
     def run(self):
-        logger.info(f"Stating with {self.args} and extra args {self.args.extra_args}")
-        if self.args.command == 'up':
-            self.up([self.args.service] if self.args.service else None)
+        if self.args.command == "up":
+            self.up(self.args.services)
         elif self.args.command == "down":
-            self.down([self.args.service])
+            self.down(self.args.services)
         elif self.args.command == "logs":
             self.logs(self.args.service)
         elif self.args.command == "export":
@@ -188,32 +188,3 @@ class Stack:
 
 def get_docker_volumes(client: docker.DockerClient) -> list[Volume]:
     return client.volumes.list()  # type: ignore[reportUnnecessaryCast]
-
-def containup_cli() -> argparse.Namespace: 
-    parser = argparse.ArgumentParser(prog=sys.argv[0])
-    parser.add_argument('--version', action = 'version', version=f'%(prog)s using containup {VERSION}')
-    subparsers = parser.add_subparsers(dest='command', required=True)
-    
-    p = subparsers.add_parser("up")
-    p.add_argument('service', nargs='?', help=f'Launches this service only')
-    p.add_argument('extra_args', nargs=argparse.REMAINDER, help="Your own arguments")
-
-    p = subparsers.add_parser("down")
-    p.add_argument('service', nargs='?', help=f'Stop this service only')
-    p.add_argument('extra_args', nargs=argparse.REMAINDER, help="Your own arguments")
-
-    logs_parser = subparsers.add_parser('logs')
-    logs_parser.add_argument('service', help='Get logs from service')
-    p.add_argument('extra_args', nargs=argparse.REMAINDER, help="Your own arguments")
-
-    subparsers.add_parser('export')
-    p.add_argument('extra_args', nargs=argparse.REMAINDER, help="Your own arguments")
-    
-    args = parser.parse_args()
-
-    if (args.command not in ["up", "down", "logs", "export"]):
-        parser.print_help()
-        sys.exit(1)
-
-    return args 
-
