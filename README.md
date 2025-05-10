@@ -24,12 +24,12 @@ It exposes a Python API designed to be declarative — so declarative, in fact, 
 can look almost like Compose YAML:
 
 ```python
-stack.service(
-    "db",
+stack.service(ServiceCfg(
+    name="db",
     image="postgres:15",
     volumes=["dbdata:/var/lib/postgresql/data"],
     networks=["backend"]
-)
+))
 ```
 
 You write your stack in Python — a language you're already using, already good at, already documented. 
@@ -40,8 +40,8 @@ load configs — everything you already know how to do in Python.
 The API stays close to the mental model of Compose, but frees you from its constraints.
 
 ```python
-stack.service(
-    "db",
+stack.service(ServiceCfg(
+    name="db",
     image="myservice:latest",
     volumes=["myservice-data:/opt/application_data"],
     environment={
@@ -49,7 +49,7 @@ stack.service(
        "PG_URL": myvault("where_is_postgres")
     }
     networks=["backend"]
-)
+))
 stack.volume("myservice-data", external = True if dev else False)
 ```
 
@@ -118,9 +118,10 @@ stack.volume("dbdata", driver="local")
 # Default behaviour is to create them if they not exist, or else, reuse them.
 stack.network("backend")
 
-# Add your services, syntax try to stick with docker-compose
-# All the lib is strongly typed (if you use Pylance for example, 
-# no worry, your IDE will help autocompletion)
+# Describe your own services. Containup API syntax tries to stick with 
+# docker-compose naming and syntax, so you can guess what you need to do. 
+# Containup library is strongly typed: if you use Pylance for example, 
+# don't worry, your IDE will help autocompleting your code.
 stack.service(ServiceCfg(
     name="db",
     image="postgres:15",
