@@ -1,12 +1,15 @@
 [project]
-name = "containup-py"
+name = "containup"
 version = "0.1.0"
 description = "Define Docker stacks in Python, include your environments logic, extend as you wish, no YAML."
-authors = [{name = "Sébasdtien JUST"}]
+authors = [{name = "Sébastien JUST"}]
 readme = "README.md"
 license = {text = "GPL-3.0-or-later"}
 dependencies = ["docker"]
 
+[tool.setuptools]
+packages = ["containup"]
+
 [build-system]
-requires = ["setuptools", "wheel"]
+requires = ["setuptools>=61.0", "wheel"]
 build-backend = "setuptools.build_meta"

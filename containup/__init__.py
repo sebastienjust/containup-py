@@ -1,1 +1,1 @@
-from .stack import Stack, ServiceCfg
+from .stack import Stack, ServiceCfg, cli
