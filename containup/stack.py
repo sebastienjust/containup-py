@@ -33,7 +33,7 @@ class ServiceCfg:
 class Stack:
     def __init__(self, name: str, args: Config):
         self.name = name
-        
+
         self.volumes: dict[str, str] = {}
         self.networks: dict[str, str] = {}
         self.services: dict[str, ServiceCfg] = {}
@@ -47,6 +47,3 @@ class Stack:
 
     def service(self, cfg: ServiceCfg) -> None:
         self.services[cfg.name] = cfg
-
-
-

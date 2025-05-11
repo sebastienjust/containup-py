@@ -14,6 +14,7 @@ from .stack import Stack
 
 logger = logging.getLogger(__name__)
 
+
 def containup_run(stack: Stack, config: Config) -> None:
     """Run the commands on the stack"""
     StackRunner(stack=stack, config=config).run()
@@ -21,8 +22,8 @@ def containup_run(stack: Stack, config: Config) -> None:
 
 class StackRunner:
     def __init__(self, stack: Stack, config: Config):
-        self.stack = stack 
-        self.config = config 
+        self.stack = stack
+        self.config = config
         self.client: docker.DockerClient = docker.from_env()
 
     def _ensure_volumes(self):
@@ -36,7 +37,6 @@ class StackRunner:
                 self.client.networks.get(net)
             except docker.errors.NotFound:  # type: ignore
                 self.client.networks.create(name=net)
-
 
     def up(self, services: list[str] | None = None) -> None:
         self._ensure_volumes()
@@ -84,7 +84,7 @@ class StackRunner:
     def down(self, services: Optional[list[str]] = None) -> None:
         targets = (
             self.stack.services
-            if not services 
+            if not services
             else {k: self.stack.services[k] for k in services}
         )
         for name, cfg in targets.items():
@@ -155,6 +155,7 @@ class StackRunner:
             print("Export -- TODO --")
         else:
             sys.exit(1)
+
 
 def get_docker_volumes(client: docker.DockerClient) -> list[Volume]:
     return client.volumes.list()  # type: ignore[reportUnnecessaryCast]
