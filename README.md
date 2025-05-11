@@ -2,6 +2,11 @@
 
 Define and run Docker Compose-like stacks entirely in Python. Include your environment logic. No YAML.
 
+> [!IMPORTANT]  
+> This is under heavy development: project just started, API is subject to a lo
+> of changes. Issues have been blocked and contribution is limited until
+> a first usable version runs in production.
+
 ## Motivation
 
 Docker Compose makes things simple: define services, volumes, networks in a YAML file, then run them.
@@ -177,7 +182,7 @@ containup-py/
 
 ## Development toolchain
 
-This library uses the following tools: 
+This library uses the following tools:
 
 | Tool       | Usage                      |
 | ---------- | -------------------------- |
