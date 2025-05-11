@@ -2,7 +2,7 @@ import logging
 import os
 import sys
 import time
-from typing import Optional, cast
+from typing import Dict, List, Tuple, Union, cast, Optional
 
 import docker
 import requests
@@ -38,7 +38,7 @@ class StackRunner:
             except docker.errors.NotFound:  # type: ignore
                 self.client.networks.create(name=net)
 
-    def up(self, services: list[str] | None = None) -> None:
+    def up(self, services: Optional[List[str]] = None) -> None:
         self._ensure_volumes()
         self._ensure_networks()
         targets = (
@@ -56,7 +56,7 @@ class StackRunner:
 
             logger.info(f"Run container {container_name} : start")
             typed_ports = cast(
-                dict[str, int | list[int] | tuple[str, int] | None], cfg.ports
+                Dict[str, Union[int, List[int], Tuple[str, int], None]], cfg.ports
             )
             typed_volumes = self._build_volumes(cfg.volumes)
             try:
@@ -111,7 +111,7 @@ class StackRunner:
 
     def _build_volumes(
         self, volume_specs: list[str]
-    ) -> dict[str, dict[str, str]] | list[str] | None:
+    ) -> Union[Dict[str, Dict[str, str]], List[str], None]:
         mounts: dict[str, dict[str, str]] = {}
         for spec in volume_specs:
             parts = spec.split(":")
@@ -126,7 +126,7 @@ class StackRunner:
             mounts[src_path] = {"bind": dst, "mode": mode}
         return mounts
 
-    def _wait_for_health(self, check: dict[str, str | int]):
+    def _wait_for_health(self, check: Dict[str, Union[str, int]]):
         url = cast(str, check["url"])
         interval = cast(int, check.get("interval", 15))
         timeout = cast(int, check.get("timeout", 2))

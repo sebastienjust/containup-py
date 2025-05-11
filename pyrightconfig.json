@@ -1,4 +1,20 @@
 {
     "typeCheckingMode": "strict",
-    "include": ["."],
+    "pythonVersion": "3.9",
+    "include": [
+        "containup"
+    ],
+    "exclude": [
+        "**"
+    ],
+    "useLibraryCodeForTypes": true,
+    "executionEnvironments": [
+        {
+            "root": "./",
+            "pythonVersion": "3.9",
+            "extraPaths": [
+                "./"
+            ]
+        }
+    ]
 }

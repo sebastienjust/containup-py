@@ -4,6 +4,7 @@ version = "0.1.0"
 description = "Define Docker stacks in Python, include your environments logic, extend as you wish, no YAML."
 authors = [{name = "Sébastien JUST"}]
 readme = "README.md"
+requires-python = ">=3.9"
 license = {text = "GPL-3.0-or-later"}
 dependencies = ["docker"]
 
@@ -16,8 +17,8 @@ build-backend = "setuptools.build_meta"
 
 [tool.ruff]
 line-length = 88
-# Python 3.8 because this is intended for production on possibly old environments
-target-version = "py38" 
+# Python 3.9 because this is intended for production on possibly old environments
+target-version = "py39" 
 lint.extend-ignore = [
     # to avoid conflicts with black
     "E501",  # line too long
@@ -30,5 +31,5 @@ lint.extend-ignore = [
 
 [tool.black]
 line-length = 88
-# Same config as 
-target-version = ["py38"]
+# Python 3.9 because this is intended for production on possibly old environments
+target-version = ["py39"]

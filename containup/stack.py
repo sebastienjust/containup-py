@@ -1,7 +1,9 @@
 import logging
-
-from typing import Optional, TypedDict, NotRequired, Literal
 from dataclasses import dataclass, field
+from typing import Dict, List, Literal, Optional, TypedDict, Union
+
+from typing_extensions import NotRequired
+
 from .cli import Config
 
 # TODO get that from elswhere
@@ -16,18 +18,25 @@ class _RestartPolicy(TypedDict):
     Name: NotRequired[Literal["always", "on-failure"]]
 
 
+PortsMapping = Dict[str, int]
+EnvironmentsMapping = Dict[str, str]
+Volumes = List[str]
+Commands = List[str]
+HealthCheck = Dict[str, Union[int, str]]
+
+
 @dataclass
 class ServiceCfg:
     name: str
     image: str
     container_name: str
-    ports: dict[str, int] = field(default_factory=dict)
-    environment: dict[str, str] = field(default_factory=dict)
-    volumes: list[str] = field(default_factory=list)
+    ports: PortsMapping = field(default_factory=lambda: {})
+    environment: EnvironmentsMapping = field(default_factory=lambda: {})
+    volumes: Volumes = field(default_factory=lambda: [])
     network: Optional[str] = None
-    command: list[str] = field(default_factory=list)
+    command: Commands = field(default_factory=lambda: [])
     restart: Optional[_RestartPolicy] = None
-    healthcheck: dict[str, int | str] = field(default_factory=dict)
+    healthcheck: Optional[Dict[str, Union[int, str]]] = None
 
 
 class Stack:

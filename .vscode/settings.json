@@ -4,5 +4,7 @@
   "python.linting.pylintEnabled": false,
   "python.linting.flake8Enabled": false,
   "editor.formatOnSave": true,
-  "python.formatting.provider": "black"
+  "python.formatting.provider": "black",
+  "python.languageServer": "Pylance",
+  "python.analysis.languageServerMode": "full"
 }
