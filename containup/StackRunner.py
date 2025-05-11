@@ -1,3 +1,4 @@
+
 import logging
 import os
 import sys
@@ -29,14 +30,21 @@ class StackRunner:
     def _ensure_volumes(self):
         for vol in self.stack.volumes.values():
             if not any(v.name == vol for v in get_docker_volumes(self.client)):
-                self.client.volumes.create(name=vol)  # type: ignore
+                self.client.volumes.create(  # type: ignore
+                    name=vol.name,
+                    driver=vol.driver,
+                    driver_opts=vol.driver_opts,
+                    labels=vol.labels,
+                )
 
     def _ensure_networks(self):
         for net in self.stack.networks.values():
             try:
-                self.client.networks.get(net)
+                self.client.networks.get(net.name)
             except docker.errors.NotFound:  # type: ignore
-                self.client.networks.create(name=net)
+                self.client.networks.create(
+                    name=net.name, driver=net.driver, options=net.options
+                )
 
     def up(self, services: Optional[List[str]] = None) -> None:
         self._ensure_volumes()

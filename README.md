@@ -91,7 +91,7 @@ pip install git+https://github.com/sebastienjust/containup-py.git
 #!/usr/bin/env python3
 
 # Elements to import
-from containup import Stack, ServiceCfg, containup_cli
+from containup import Stack, Service, Volume, Network, containup_cli
 
 # Configure logging so you can have log output as you wish
 logging.basicConfig(
@@ -118,23 +118,23 @@ stack = Stack("mystack", config)
 
 # If you need add one or more volumes (you can use "if", "for loops")
 # Default behaviour is to create them if they not exist, or else, reuse them.
-stack.volume("dbdata", driver="local")
+stack.add(Volume("dbdata", driver="local"))
 
 # If you need add one or more networks (you can use "if", "for loops")
 # Default behaviour is to create them if they not exist, or else, reuse them.
-stack.network("backend")
+stack.add(Network("backend"))
 
 # Describe your own services. Containup API syntax tries to stick with
 # docker-compose naming and syntax, so you can guess what you need to do.
 # Containup library is strongly typed: if you use Pylance for example,
 # don't worry, your IDE will help autocompleting your code.
-stack.service(ServiceCfg(
+stack.add(Service(
     name="db",
     image="postgres:15",
     volumes=["dbdata:/var/lib/postgresql/data"],
     networks=["backend"]
 ))
-stack.service(ServiceCfg(
+stack.add(Service(
     name="app",
     image="myorg/myapp:latest",
     depends_on=["db"],
@@ -163,6 +163,64 @@ containup_run(stack, config)
 # you should not need a lot of parameters since your script can get what it
 # needs programmatically.
 ./containup-stack.py up -- --myprofile=staging
+```
+
+## API usage
+
+You can add elements to your stack in multiple ways:
+
+```python
+stack = Stack("mystack", config)
+stack.add(Volume("myvolume1"))
+stack.add(Volume("myvolume2"))
+stack.add(Network("network1"))
+stack.add(Network("network2"))
+stack.add(Service(name="myservice",image="nginx:latest"))
+```
+
+or you can chain calls as `add` is a builder method:
+
+```python
+stack = Stack("mystack", config)
+    .add(Volume("myvolume2"))
+    .add(Volume("myvolume1"))
+    .add(Network("network1"))
+    .add(Network("network2"))
+    .add(Service(name="myservice",image="nginx:latest"))
+```
+
+or add elements as lists:
+
+```python
+stack = Stack("mystack", config).add([
+    Volume("myvolume1"),
+    Volume("myvolume2"),
+    Network("network1"),
+    Network("network2"),
+    Service(name="myservice",image="nginx:latest")
+])
+```
+
+or a combination of everything:
+
+```python
+stack = Stack("mystack", config).add([
+    Volume("myvolume1"),
+    Volume("myvolume2"),
+    Network("network1"),
+]).add(
+    Service(name="myservice",image="nginx:latest")
+)
+
+if something:
+    stack.add(Network("network2"))
+
+if other_thing:
+    stack.add([
+        Volume("monitoring_data"),
+        Network("monitoring_network"),
+        Service(name="monitoring")
+    ])
 ```
 
 ## Project layout
