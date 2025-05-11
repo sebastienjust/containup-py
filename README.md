@@ -37,11 +37,15 @@ stack.add(Service(
 ))
 ```
 
-You write your stack in Python — a language you're already using, already good at, already documented.
+You write your stack in Python — a language you're maybe already using,
+already good at, already documented. And if you don't know Python, it doesn't
+matter because the syntax you need for basic things is, in fact, no more
+complicated than YAML.
+
 You express logic directly. No interpolation, no templating, no escaping, no hacks.
 
 But behind that simplicity, it’s real code. You can loop, branch, query, fetch secrets,
-load configs — everything you already know how to do in Python.
+load configs — everything you already know, or can learn, in Python.
 The API stays close to the mental model of Compose, but frees you from its constraints.
 
 ```python
