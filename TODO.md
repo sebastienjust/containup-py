@@ -2,7 +2,14 @@
 
 ## Current
 
-- 🟥 🔥 Unblock healthcheck logic
+- 🟥 Unblock healthcheck logic
+
+- 🟩 Rewamp how mounts and volumes are declared in Service
+
+- 🟨 Redesign port mapping to remove confusion
+
+  Port mapping is confusing in Docker, you never know which one is the host
+  and other the container.
 
 ## Backlog
 

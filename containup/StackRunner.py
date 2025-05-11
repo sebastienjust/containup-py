@@ -1,16 +1,17 @@
 import logging
-import os
 import sys
 import time
 from typing import Dict, List, Tuple, Union, cast, Optional
 
 import docker
+from docker.types import Mount
 import requests
 from docker.errors import DockerException
 from docker.models.volumes import Volume
 
 from .cli import Config
-from .stack import Stack
+from .stack import Stack, ServiceMounts, BindMount, VolumeMount, TmpfsMount
+from .absolute_paths import to_absolute_path
 
 logger = logging.getLogger(__name__)
 
@@ -28,6 +29,7 @@ class StackRunner:
 
     def _ensure_volumes(self):
         for vol in self.stack.volumes.values():
+            logger.debug(f"Checking {vol.name}")
             if not any(v.name == vol for v in get_docker_volumes(self.client)):
                 self.client.volumes.create(  # type: ignore
                     name=vol.name,
@@ -38,6 +40,7 @@ class StackRunner:
 
     def _ensure_networks(self):
         for net in self.stack.networks.values():
+            logger.debug(f"Checking {net.name}")
             try:
                 self.client.networks.get(net.name)
             except docker.errors.NotFound:  # type: ignore
@@ -46,6 +49,7 @@ class StackRunner:
                 )
 
     def up(self, services: Optional[List[str]] = None) -> None:
+        logger.debug(f"Running command up with services {services}")
         self._ensure_volumes()
         self._ensure_networks()
         targets = (
@@ -65,7 +69,7 @@ class StackRunner:
             typed_ports = cast(
                 Dict[str, Union[int, List[int], Tuple[str, int], None]], cfg.ports
             )
-            typed_volumes = self._build_volumes(cfg.volumes)
+            mounts = self._build_mounts(cfg.volumes)
             try:
                 self.client.containers.run(
                     image=cfg.image,
@@ -76,7 +80,7 @@ class StackRunner:
                     name=container_name,
                     environment=cfg.environment,
                     ports=typed_ports,
-                    volumes=typed_volumes,
+                    mounts=mounts,
                     network=cfg.network,
                     restart_policy=cfg.restart,
                     detach=True,
@@ -116,22 +120,48 @@ class StackRunner:
                 f"Service '{service}', container {container_name} is not running."
             )
 
-    def _build_volumes(
-        self, volume_specs: list[str]
-    ) -> Union[Dict[str, Dict[str, str]], List[str], None]:
-        mounts: dict[str, dict[str, str]] = {}
-        for spec in volume_specs:
-            parts = spec.split(":")
-            if len(parts) == 2:
-                src, dst = parts
-                mode = "rw"
-            elif len(parts) == 3:
-                src, dst, mode = parts
+    def _build_mounts(self, volume_specs: ServiceMounts) -> List[Mount]:
+        result: list[Mount] = []
+        for m in volume_specs:
+            if isinstance(m, BindMount):
+                result.append(
+                    Mount(
+                        type="bind",
+                        source=to_absolute_path(m.source),
+                        target=m.target,
+                        read_only=m.read_only,
+                        consistency=m.consistency,
+                        propagation=m.propagation,
+                    )
+                )
+            elif isinstance(m, VolumeMount):
+                result.append(
+                    Mount(
+                        type="volume",
+                        source=m.source,
+                        target=m.target,
+                        read_only=m.read_only,
+                        consistency=m.consistency,
+                        no_copy=m.no_copy,
+                        labels=m.labels,
+                        driver_config=m.driver_config,
+                    )
+                )
+            elif isinstance(m, TmpfsMount):  # type: ignore
+                result.append(
+                    Mount(
+                        source=None,
+                        type="tmpfs",
+                        target=m.target,
+                        read_only=m.read_only,
+                        consistency=m.consistency,
+                        tmpfs_size=m.tmpfs_size,
+                        tmpfs_mode=m.tmpfs_mode,
+                    )
+                )
             else:
-                continue
-            src_path = os.path.abspath(src) if os.path.exists(src) else src
-            mounts[src_path] = {"bind": dst, "mode": mode}
-        return mounts
+                raise TypeError(f"Unsupported mount type: {type(m)}")
+        return result
 
     def _wait_for_health(self, check: Dict[str, Union[str, int]]):
         url = cast(str, check["url"])

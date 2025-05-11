@@ -2,6 +2,7 @@ import logging
 from dataclasses import dataclass, field
 from typing import Dict, List, Literal, Optional, TypedDict, Union
 
+from docker.types import DriverConfig
 from typing_extensions import NotRequired
 
 from .cli import Config
@@ -20,9 +21,97 @@ class _RestartPolicy(TypedDict):
 
 PortsMapping = Dict[str, int]
 EnvironmentsMapping = Dict[str, str]
-Volumes = List[str]
+
 Commands = List[str]
 HealthCheck = Dict[str, Union[int, str]]
+
+
+@dataclass
+class Volume:
+    name: str
+    """Name of the volume. If not specified, the engine generates a name."""
+
+    driver: Optional[str] = None
+    """Name of the driver used to create the volume"""
+
+    driver_opts: Optional[dict[str, str]] = None
+    """Driver options as a key-value dictionary"""
+
+    labels: Optional[dict[str, str]] = None
+    """Labels to set on the volume"""
+
+
+@dataclass
+class BindMount:
+    """
+    Represents a Docker 'bind' mount (host directory mounted into the container).
+    """
+
+    source: str
+    """Absolute path on the host to mount."""
+
+    target: str
+    """Path inside the container where the bind will be mounted."""
+
+    read_only: bool = False
+    """If True, mount is read-only."""
+
+    consistency: Optional[str] = None
+    """Mount consistency mode ('default', 'consistent', 'cached', 'delegated')."""
+
+    propagation: Optional[str] = None
+    """Mount propagation mode with the value [r]private, [r]shared, or [r]slave."""
+
+
+@dataclass
+class VolumeMount:
+    """Represents a Docker volume mount."""
+
+    source: str
+    """Name of the Docker volume."""
+
+    target: str
+    """Path inside the container where the volume will be mounted."""
+
+    read_only: bool = False
+    """If True, volume is mounted read-only."""
+
+    consistency: Optional[str] = None
+    """Mount consistency mode ('default', 'consistent', 'cached', 'delegated')."""
+
+    no_copy: bool = False
+    """False if the volume should be populated with the data from the target. Default: False."""
+
+    labels: Optional[dict[str, str]] = None
+    """Labels to set on the volume"""
+
+    driver_config: Optional[DriverConfig] = None
+    """Name and configuration of the driver used to create the volume."""
+
+
+@dataclass
+class TmpfsMount:
+    """
+    Represents a Docker tmpfs mount (in-memory filesystem).
+    """
+
+    target: str
+    """Path inside the container where the tmpfs will be mounted."""
+
+    read_only: bool = False
+    """If True, tmpfs is mounted read-only."""
+
+    consistency: Optional[str] = None
+    """Mount consistency mode ('default', 'consistent', 'cached', 'delegated')."""
+
+    tmpfs_size: Optional[Union[int, str]] = None
+    """Size of the tmpfs mount (in bytes or as a string like '64m')."""
+
+    tmpfs_mode: Optional[int] = None
+    """Filesystem permission mode (e.g., 1777)."""
+
+
+ServiceMounts = List[Union[VolumeMount, BindMount, TmpfsMount]]
 
 
 @dataclass
@@ -64,7 +153,14 @@ class Service:
 
     """
 
-    volumes: Volumes = field(default_factory=lambda: [])
+    volumes: ServiceMounts = field(default_factory=lambda: [])
+    """
+    Alias for mounts, same thing, both are merged. 
+
+    We do that because most people know "volumes" and not "mounts"
+    """
+    mounts: ServiceMounts = field(default_factory=lambda: [])
+
     """
     List of strings which each one of its elements specifies a mount volume
 
@@ -127,20 +223,9 @@ class Service:
     TODO We must improve that, it's awful.
     """
 
-
-@dataclass
-class Volume:
-    name: str
-    """Name of the volume. If not specified, the engine generates a name."""
-
-    driver: Optional[str] = None
-    """Name of the driver used to create the volume"""
-
-    driver_opts: Optional[dict[str, str]] = None
-    """Driver options as a key-value dictionary"""
-
-    labels: Optional[dict[str, str]] = None
-    """Labels to set on the volume"""
+    def mounts_all(self) -> ServiceMounts:
+        """Get all volumes and mounts in the same format"""
+        return self.volumes + self.mounts
 
 
 @dataclass
@@ -169,8 +254,9 @@ class Stack:
         self.args: Config = args
 
     def add(self, item_or_list: Union[StockItem, List[StockItem]]):
-        items = item_or_list if item_or_list is list else [item_or_list]
+        items = item_or_list if isinstance(item_or_list, list) else [item_or_list]
         for item in items:
+            logger.debug(item)
             if isinstance(item, Service):
                 self.services[item.name] = item
             elif isinstance(item, Volume):
