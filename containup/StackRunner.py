@@ -154,7 +154,7 @@ class StackRunner:
         elif self.config.command == "export":
             print("Export -- TODO --")
         else:
-            sys.exit(1)
+            raise RuntimeError(f"Unrcognized command {self.config.command}")
 
 
 def get_docker_volumes(client: docker.DockerClient) -> list[Volume]:

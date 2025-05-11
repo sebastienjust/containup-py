@@ -2,7 +2,8 @@
     "typeCheckingMode": "strict",
     "pythonVersion": "3.9",
     "include": [
-        "containup"
+        "containup",
+        "tests"
     ],
     "exclude": [
         "**"
