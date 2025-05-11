@@ -10,7 +10,14 @@ from docker.errors import DockerException
 from docker.models.volumes import Volume
 
 from .cli import Config
-from .stack import Stack, ServiceMounts, BindMount, VolumeMount, TmpfsMount
+from .stack import (
+    Stack,
+    ServiceMounts,
+    BindMount,
+    VolumeMount,
+    TmpfsMount,
+    ServicePortMapping,
+)
 from .absolute_paths import to_absolute_path
 
 logger = logging.getLogger(__name__)
@@ -66,9 +73,7 @@ class StackRunner:
                 pass
 
             logger.info(f"Run container {container_name} : start")
-            typed_ports = cast(
-                Dict[str, Union[int, List[int], Tuple[str, int], None]], cfg.ports
-            )
+            typed_ports = self.to_docker_ports(cfg.ports)
             mounts = self._build_mounts(cfg.volumes)
             try:
                 self.client.containers.run(
@@ -79,7 +84,7 @@ class StackRunner:
                     remove=False,
                     name=container_name,
                     environment=cfg.environment,
-                    ports=typed_ports,
+                    ports=typed_ports,  # type: ignore
                     mounts=mounts,
                     network=cfg.network,
                     restart_policy=cfg.restart,
@@ -91,6 +96,31 @@ class StackRunner:
 
             if cfg.healthcheck:
                 self._wait_for_health(cfg.healthcheck)
+
+    def to_docker_port(
+        self, mapping: ServicePortMapping
+    ) -> Tuple[str, Union[int, Tuple[str, int]]]:
+        key = f"{mapping.container_port}/{mapping.protocol}"
+        value: Union[int, Tuple[str, int]]
+        if mapping.host_ip is None:
+            value = mapping.host_port or mapping.container_port
+        else:
+            value = (mapping.host_ip, mapping.host_port or mapping.container_port)
+        return key, value
+
+    def to_docker_ports(
+        self, mappings: List[ServicePortMapping]
+    ) -> Dict[str, List[Union[int, Tuple[str, int]]]]:
+        result: Dict[str, List[Union[int, Tuple[str, int]]]] = {}
+
+        for m in mappings:
+            key, value = self.to_docker_port(m)
+            if key not in result:
+                result[key] = [value]
+            else:
+                result[key].append(value)
+
+        return result
 
     def down(self, services: Optional[list[str]] = None) -> None:
         targets = (

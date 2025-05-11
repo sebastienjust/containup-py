@@ -227,6 +227,82 @@ if other_thing:
     ])
 ```
 
+## Creating services tips and tricks
+
+Mostly you will get help of IDE and you'll find everything you need in class Stack.
+
+Some differences on things you may be used to:
+
+### Service volume mapping
+
+Docker manages 3 types of "volumes" :
+
+- bind: maps one of the container's directory to your host in another directory
+- volume: maps one of the container's directory to a Docker volume (a virtual hard disk)
+- tmpfs: creates a temporary, in-memory, filesystem.
+
+It's often unclear to know which parameters to use in which case. That's why
+we declare those like this:
+
+If the directory to map is a Docker volume, use VolumeMount
+
+```python
+stack.add(Volume("postgres-data"))
+stack.add(Service(
+    "postgres",
+    image="postgres:17",
+    volumes=[ VolumeMount("postgres-data", "/var/lib/postgresql/data") ]
+))
+```
+
+If the directory to map is your host's hard drive, it's bind:
+
+```python
+stack.add(Service(
+    "postgres",
+    image="postgres:17",
+    volumes=[ BindMount("/home/mycomputer/postgres", "/var/lib/postgresql/data") ]
+))
+```
+
+And for TmpFS
+
+```python
+stack.add(Service(
+    "postgres",
+    image="postgres:17",
+    volumes=[ TmpfsMount("/var/lib/postgresql/data") ]
+))
+```
+
+In each scenario, you can pass additional parameters, but only the parameters
+that matches the type of mount.
+
+### Port Mapping
+
+To avoid confusion between the port "inside" the container (which needs to be
+exposed) and the port "outside" the container (from which you can access the
+container services), use explicit notation like this:
+
+```python
+from containup import Service, port
+
+stack.add(Service(
+    name="caddy",
+    image="caddy:latest",
+    ports=[
+        port(inside=80, ouside=8080),
+        port(inside=443, ouside=8443),
+        port(inside=9000),
+    ],
+)),
+```
+
+You have some small factory methods in containup you can use to create the port mappings,
+use them to make your stack structure more readable.
+
+You can also use the full `ServicePortMapping` class that allow precise configuration.
+
 ## Project layout
 
 This repo follows standard Python packaging practices:
