@@ -13,3 +13,22 @@ packages = ["containup"]
 [build-system]
 requires = ["setuptools>=61.0", "wheel"]
 build-backend = "setuptools.build_meta"
+
+[tool.ruff]
+line-length = 88
+# Python 3.8 because this is intended for production on possibly old environments
+target-version = "py38" 
+lint.extend-ignore = [
+    # to avoid conflicts with black
+    "E501",  # line too long
+    "W291",  # spaces at end of line
+    "W293",  # empty line with space
+    "W292",  # file does not finish with a newline
+    "E711",  # None comparison (Black will reformat)
+    "E712",  # True/False comparison (Black will reformat)
+]
+
+[tool.black]
+line-length = 88
+# Same config as 
+target-version = ["py38"]

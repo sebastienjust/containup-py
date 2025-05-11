@@ -4,23 +4,23 @@ Define and run Docker Compose-like stacks entirely in Python. Include your envir
 
 ## Motivation
 
-Docker Compose makes things simple: define services, volumes, networks in a YAML file, then run them. 
-But the moment you try to do anything dynamic — use secrets, switch images based on environments, 
+Docker Compose makes things simple: define services, volumes, networks in a YAML file, then run them.
+But the moment you try to do anything dynamic — use secrets, switch images based on environments,
 mount things conditionally — the model breaks.
 
-You start adding .env files. Then you add envsubst or templating. Then you write shell scripts 
-to export variables, inject values, conditionally generate docker-compose.yml. 
-Then maybe you start using Makefiles or wrapper scripts. At some point, you’re not really “just 
+You start adding .env files. Then you add envsubst or templating. Then you write shell scripts
+to export variables, inject values, conditionally generate docker-compose.yml.
+Then maybe you start using Makefiles or wrapper scripts. At some point, you’re not really “just
 composing containers” anymore — you’re maintaining a brittle orchestration layer around Compose,
-just to inject the right values into a rigid format. What was supposed to be a simple declarative 
+just to inject the right values into a rigid format. What was supposed to be a simple declarative
 file becomes a small system of indirection and tooling.
 
-IMHO, the paradox is this: Docker Compose is a static format trying to describe dynamic behavior. 
-But real-world deployments are dynamic: logic, context, secrets, runtime conditions. 
+IMHO, the paradox is this: Docker Compose is a static format trying to describe dynamic behavior.
+But real-world deployments are dynamic: logic, context, secrets, runtime conditions.
 So we build layers on top of YAML to simulate what a real programming language would do natively.
 
-That's what containup-py solves (in my use-cases anyway), by taking the opposite approach. 
-It exposes a Python API designed to be declarative — so declarative, in fact, that your Python code 
+That's what containup-py solves (in my use-cases anyway), by taking the opposite approach.
+It exposes a Python API designed to be declarative — so declarative, in fact, that your Python code
 can look almost like Compose YAML:
 
 ```python
@@ -32,11 +32,11 @@ stack.service(ServiceCfg(
 ))
 ```
 
-You write your stack in Python — a language you're already using, already good at, already documented. 
-You express logic directly. No interpolation, no templating, no escaping, no hacks. 
+You write your stack in Python — a language you're already using, already good at, already documented.
+You express logic directly. No interpolation, no templating, no escaping, no hacks.
 
-But behind that simplicity, it’s real code. You can loop, branch, query, fetch secrets, 
-load configs — everything you already know how to do in Python. 
+But behind that simplicity, it’s real code. You can loop, branch, query, fetch secrets,
+load configs — everything you already know how to do in Python.
 The API stays close to the mental model of Compose, but frees you from its constraints.
 
 ```python
@@ -64,12 +64,13 @@ but it can be whatever you want).
 
 Make the file executable if needed (`chmod u+x ./containup-stack.py`)
 
-Make sure you install `containup`either globally on the machine : 
+Make sure you install `containup`either globally on the machine :
 
 ```bash
 pip install git+https://github.com/sebastienjust/containup-py.git
 ```
-or with a local `venv` to not pollute the host with extra stuff. 
+
+or with a local `venv` to not pollute the host with extra stuff.
 
 ```bash
 python -m venv .venv
@@ -94,12 +95,12 @@ logging.basicConfig(
 )
 
 # Tell containup to handle the command line. It will parse what it needs
-# then give you back your own "extra arguments" in config.extra_args. 
+# then give you back your own "extra arguments" in config.extra_args.
 # Then, you can parse them with, for example with Python's argparse
 config = containup_cli()
 
-# This is your moment, your business logic. You grab what you need from your 
-# machine, remote services, command-line arguments, environment variables, 
+# This is your moment, your business logic. You grab what you need from your
+# machine, remote services, command-line arguments, environment variables,
 # whatever you need.
 password = passwords.find("mybddpassword")
 
@@ -118,9 +119,9 @@ stack.volume("dbdata", driver="local")
 # Default behaviour is to create them if they not exist, or else, reuse them.
 stack.network("backend")
 
-# Describe your own services. Containup API syntax tries to stick with 
-# docker-compose naming and syntax, so you can guess what you need to do. 
-# Containup library is strongly typed: if you use Pylance for example, 
+# Describe your own services. Containup API syntax tries to stick with
+# docker-compose naming and syntax, so you can guess what you need to do.
+# Containup library is strongly typed: if you use Pylance for example,
 # don't worry, your IDE will help autocompleting your code.
 stack.service(ServiceCfg(
     name="db",
@@ -137,7 +138,7 @@ stack.service(ServiceCfg(
 ))
 
 # Now that we have the stack declared, we can run the commands on the stack
-stack.run(args)
+containup_run(stack, config)
 ```
 
 ### Use your script
@@ -155,11 +156,12 @@ stack.run(args)
 ./containup-stack.py logs myservice
 # Starts everything and give yourself parameters
 # you should not need a lot of parameters since your script can get what it
-# needs programmatically. 
+# needs programmatically.
 ./containup-stack.py up -- --myprofile=staging
 ```
 
 ## Project layout
+
 This repo follows standard Python packaging practices:
 
 ```
@@ -173,6 +175,19 @@ containup-py/
   LICENSE
 ```
 
+## Development toolchain
+
+This library uses the following tools: 
+
+| Tool       | Usage                      |
+| ---------- | -------------------------- |
+| ruff       | linter                     |
+| black      | formatter                  |
+| pyright    | static typing verification |
+| pytest     | unit tests                 |
+| pre-commit | pre-commit hooks           |
+
 ## License
+
 This project is licensed under the GNU General Public License v3.0.
 See the LICENSE file for details.

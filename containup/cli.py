@@ -73,11 +73,11 @@ def containup_cli() -> Config:
     subparsers = parser.add_subparsers(dest="command", required=True)
 
     p = subparsers.add_parser("up")
-    p.add_argument("service", nargs="?", help=f"Launches this service only")
+    p.add_argument("service", nargs="?", help="Launches this service only")
     p.add_argument("extra_args", nargs=argparse.REMAINDER, help="Your own arguments")
 
     p = subparsers.add_parser("down")
-    p.add_argument("service", nargs="?", help=f"Stop this service only")
+    p.add_argument("service", nargs="?", help="Stop this service only")
     p.add_argument("extra_args", nargs=argparse.REMAINDER, help="Your own arguments")
 
     logs_parser = subparsers.add_parser("logs")
