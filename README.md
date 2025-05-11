@@ -29,7 +29,7 @@ It exposes a Python API designed to be declarative — so declarative, in fact, 
 can look almost like Compose YAML:
 
 ```python
-stack.service(ServiceCfg(
+stack.add(Service(
     name="db",
     image="postgres:15",
     volumes=["dbdata:/var/lib/postgresql/data"],
@@ -45,7 +45,7 @@ load configs — everything you already know how to do in Python.
 The API stays close to the mental model of Compose, but frees you from its constraints.
 
 ```python
-stack.service(ServiceCfg(
+stack.add(Service(
     name="db",
     image="myservice:latest",
     volumes=["myservice-data:/opt/application_data"],
@@ -55,7 +55,7 @@ stack.service(ServiceCfg(
     }
     networks=["backend"]
 ))
-stack.volume("myservice-data", external = True if dev else False)
+stack.add(Volume("myservice-data", external = True if dev else False))
 ```
 
 This isn’t about replacing Compose. It’s about not having to build a custom orchestration layer around Compose just to support dynamic use cases.
