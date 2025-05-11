@@ -54,7 +54,7 @@ class StackRunner:
             else (self.stack.services[k] for k in services)
         )
         for cfg in targets:
-            container_name = cfg.container_name
+            container_name = cfg.container_name or cfg.name
             try:
                 logger.info(f"Remove container if exists {container_name}")
                 self.client.containers.get(container_name).remove(force=True)
@@ -95,7 +95,7 @@ class StackRunner:
             else {k: self.stack.services[k] for k in services}
         )
         for name, cfg in targets.items():
-            container_name = cfg.container_name
+            container_name = cfg.container_name or cfg.name
             try:
                 logger.info(f"Remove container {name} : start")
                 self.client.containers.get(container_name).remove(force=True)
@@ -106,7 +106,7 @@ class StackRunner:
 
     def logs(self, service: str) -> None:
         cfg = self.stack.services[service]
-        container_name = cfg.container_name
+        container_name = cfg.container_name or cfg.name
         try:
             container = self.client.containers.get(container_name)
             logs = container.logs(stream=False)
