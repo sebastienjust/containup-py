@@ -3,7 +3,7 @@
 Define and run Docker Compose-like stacks entirely in Python. Include your environment logic. No YAML.
 
 > [!IMPORTANT]  
-> This is under heavy development: project just started, API is subject to a lo
+> This is under heavy development: project just started, API is subject to a lot
 > of changes. Issues have been blocked and contribution is limited until
 > a first usable version runs in production.
 
