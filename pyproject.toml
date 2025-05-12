@@ -8,9 +8,6 @@ requires-python = ">=3.9"
 license = {text = "GPL-3.0-or-later"}
 dependencies = ["docker"]
 
-[tool.setuptools]
-packages = ["containup"]
-
 [tool.setuptools.packages.find]
 where = ["."]
 include = ["containup*"]
