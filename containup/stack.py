@@ -290,7 +290,7 @@ class Stack:
     def __init__(self, name: str, args: Config):
         self.name = name
 
-        self.volumes: dict[str, Volume] = {}
+        self.mounts: dict[str, Volume] = {}
         self.networks: dict[str, Network] = {}
         self.services: dict[str, Service] = {}
         self.args: Config = args
@@ -302,7 +302,7 @@ class Stack:
             if isinstance(item, Service):
                 self.services[item.name] = item
             elif isinstance(item, Volume):
-                self.volumes[item.name] = item
+                self.mounts[item.name] = item
             elif isinstance(item, Network):  # type: ignore
                 self.networks[item.name] = item
         return self
