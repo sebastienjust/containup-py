@@ -15,7 +15,6 @@ classifiers = [
     "Topic :: System :: Systems Administration",
     "Topic :: System :: Software Distribution",
     "Topic :: Software Development :: Build Tools",
-    "License :: OSI Approved :: GNU General Public License v3 or later (GPLv3+)",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.9",
     "Operating System :: OS Independent"
