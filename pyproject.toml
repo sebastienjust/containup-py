@@ -64,8 +64,8 @@ target-version = ["py39"]
 [tool.bumpver]
 current_version = "0.1.1"
 version_pattern = "MAJOR.MINOR.PATCH[PYTAGNUM]"
-commit_message = "bump version {old_version} -> {new_version}"
-tag_message = "{new_version}"
+commit_message = "bump version v{old_version} -> v{new_version}"
+tag_message = "v{new_version}"
 tag_scope = "default"
 pre_commit_hook = ""
 post_commit_hook = ""
