@@ -7,6 +7,11 @@ Define and run Docker Compose-like stacks entirely in Python. Include your envir
 > of changes. Issues have been blocked and contribution is limited until
 > a first usable version runs in production.
 
+[![PyPI version](https://img.shields.io/pypi/v/containup)](https://pypi.org/project/containup/)
+[![Downloads/month](https://static.pepy.tech/badge/containup/month)](https://pepy.tech/project/containup)
+[![License: GPL-3.0-or-later](https://img.shields.io/badge/License-GPL%20v3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0.html)
+[![CI](https://github.com/sebastienjust/containup-py/actions/workflows/test.yml/badge.svg)](https://github.com/sebastienjust/containup-py/actions/workflows/test.yml)
+
 ## Motivation
 
 Docker Compose makes things simple: define services, volumes, networks in a YAML file, then run them.
@@ -76,7 +81,7 @@ Make the file executable if needed (`chmod u+x ./containup-stack.py`)
 Make sure you install `containup`either globally on the machine :
 
 ```bash
-pip install git+https://github.com/sebastienjust/containup-py.git
+pip install containup
 ```
 
 or with a local `venv` to not pollute the host with extra stuff.
