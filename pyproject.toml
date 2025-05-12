@@ -11,6 +11,10 @@ dependencies = ["docker"]
 [tool.setuptools]
 packages = ["containup"]
 
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["containup*"]
+
 [build-system]
 requires = ["setuptools>=61.0", "wheel"]
 build-backend = "setuptools.build_meta"
