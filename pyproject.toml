@@ -1,5 +1,6 @@
 [project]
 name = "containup"
+# Updated by bumpver
 version = "0.1.0"
 description = "Define Docker stacks in Python, include your environments logic, extend as you wish, no YAML."
 authors = [{name = "Sébastien JUST"}]
@@ -34,3 +35,26 @@ lint.extend-ignore = [
 line-length = 88
 # Python 3.9 because this is intended for production on possibly old environments
 target-version = ["py39"]
+
+[tool.bumpver]
+current_version = "0.1.0"
+version_pattern = "MAJOR.MINOR.PATCH[PYTAGNUM]"
+commit_message = "bump version {old_version} -> {new_version}"
+tag_message = "{new_version}"
+tag_scope = "default"
+pre_commit_hook = ""
+post_commit_hook = ""
+commit = true
+tag = true
+push = true
+
+[tool.bumpver.file_patterns]
+"pyproject.toml" = [
+    'current_version = "{version}"',
+]
+"containup/__init__.py" = [
+    '__version__ = "{version}"'
+]
+"containup/cli.py" = [
+    '_version = "{version}"'
+]

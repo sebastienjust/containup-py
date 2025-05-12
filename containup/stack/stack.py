@@ -9,9 +9,6 @@ from .service_mounts import ServiceMounts
 from .volume import Volume
 from .network import Network
 
-# TODO get that from elswhere
-VERSION = "0.1.0"
-
 # Initialize logger for this lib. Don't force the logger
 logger = logging.getLogger(__name__)
 

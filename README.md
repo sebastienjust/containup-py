@@ -1,4 +1,4 @@
-# containup-py
+# containup
 
 Define and run Docker Compose-like stacks entirely in Python. Include your environment logic. No YAML.
 
@@ -327,13 +327,14 @@ containup-py/
 
 This library uses the following tools:
 
-| Tool       | Usage                      |
-| ---------- | -------------------------- |
-| ruff       | linter                     |
-| black      | formatter                  |
-| pyright    | static typing verification |
-| pytest     | unit tests                 |
-| pre-commit | pre-commit hooks           |
+| Tool       | Usage                                 |
+| ---------- | ------------------------------------- |
+| ruff       | linter                                |
+| black      | formatter                             |
+| pyright    | static typing verification            |
+| pytest     | unit tests                            |
+| pre-commit | pre-commit hooks                      |
+| bumpver    | Bump version numbers in project files |
 
 ## License
 

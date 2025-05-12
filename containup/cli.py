@@ -1,11 +1,12 @@
 import argparse
-import importlib.metadata
 import logging
 import sys
 from typing import List, Optional, cast
 
-version = importlib.metadata.version("containup") or "unknown_version"
 logger = logging.getLogger(__name__)
+
+# Version is managed by bumpver. Do not touch
+_version = "0.1.0"
 
 
 class Config:
@@ -76,7 +77,7 @@ def containup_cli_args(prog: str, known_args: list[str]) -> Config:
     """
     parser = argparse.ArgumentParser(prog=prog)
     parser.add_argument(
-        "--version", action="version", version=f"%(prog)s using containup {version}"
+        "--version", action="version", version=f"%(prog)s using containup {_version}"
     )
     subparsers = parser.add_subparsers(dest="command", required=True)
 
