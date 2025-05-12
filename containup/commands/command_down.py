@@ -3,8 +3,7 @@ from typing import Optional
 
 import docker
 
-from ..cli import Config
-from ..stack import (
+from containup.stack import (
     Stack,
 )
 
@@ -13,10 +12,9 @@ logger = logging.getLogger(__name__)
 
 class CommandDown:
 
-    def __init__(self, stack: Stack, config: Config, client: docker.DockerClient):
+    def __init__(self, stack: Stack, client: docker.DockerClient):
         self.stack = stack
         self.client = client
-        self.config = config
 
     def down(self, services: Optional[list[str]] = None) -> None:
         targets = (

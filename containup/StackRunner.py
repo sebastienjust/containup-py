@@ -1,10 +1,15 @@
 import logging
 
+
 import docker
 
 from .cli import Config
-from .commands import CommandDown, CommandUp
+
 from .stack import Stack
+
+from containup.commands.command_up import CommandUp
+from containup.commands.command_down import CommandDown
+from containup.commands.command_logs import CommandLogs
 
 logger = logging.getLogger(__name__)
 
@@ -20,26 +25,14 @@ class StackRunner:
         self.config = config
         self.client: docker.DockerClient = docker.from_env()
 
-    def logs(self, service: str) -> None:
-        cfg = self.stack.services[service]
-        container_name = cfg.container_name or cfg.name
-        try:
-            container = self.client.containers.get(container_name)
-            logs = container.logs(stream=False)
-            logger.info(logs.decode())
-        except docker.errors.NotFound:  # type: ignore
-            logger.error(
-                f"Service '{service}', container {container_name} is not running."
-            )
-
     # Handle command line parsing and launches the commands on the stack
     def run(self):
         if self.config.command == "up":
-            CommandUp(self.stack, self.config, self.client).up(self.config.services)
+            CommandUp(self.stack, self.client).up(self.config.services)
         elif self.config.command == "down":
-            CommandDown(self.stack, self.config, self.client).down(self.config.services)
+            CommandDown(self.stack, self.client).down(self.config.services)
         elif self.config.command == "logs":
-            self.logs(self.config.service)
+            CommandLogs(self.stack, self.client).logs(self.config.service)
         elif self.config.command == "export":
             print("Export -- TODO --")
         else:

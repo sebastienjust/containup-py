@@ -9,9 +9,7 @@ from docker.errors import DockerException
 from docker.models.volumes import Volume
 from docker.types import Mount
 
-from ..absolute_paths import to_absolute_path
-from ..cli import Config
-from ..stack import (
+from containup.stack import (
     BindMount,
     ServiceMounts,
     ServicePortMapping,
@@ -19,15 +17,15 @@ from ..stack import (
     TmpfsMount,
     VolumeMount,
 )
+from containup.utils.absolute_paths import to_absolute_path
 
 logger = logging.getLogger(__name__)
 
 
 class CommandUp:
-    def __init__(self, stack: Stack, config: Config, client: docker.DockerClient):
+    def __init__(self, stack: Stack, client: docker.DockerClient):
         self.stack = stack
         self.client = client
-        self.config = config
 
     def up(self, services: Optional[List[str]] = None) -> None:
         logger.debug(f"Running command up with services {services}")
