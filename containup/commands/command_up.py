@@ -1,21 +1,27 @@
 import logging
 import sys
-import time
-from typing import Dict, List, Optional, Tuple, Union, cast
+from typing import Dict, List, Optional, Tuple, Union, Any
+from containup.utils.duration_to_nano import duration_to_nano
 
 import docker
-import requests
 from docker.errors import DockerException
 from docker.models.volumes import Volume
 from docker.types import Mount
 
-from containup.stack import (
+from containup.stack.stack import (
     BindMount,
     ServiceMounts,
     ServicePortMapping,
     Stack,
     TmpfsMount,
     VolumeMount,
+)
+from containup.stack.service_healthcheck import (
+    HealthCheck,
+    InheritHealthcheck,
+    NoneHealthcheck,
+    CmdHealthcheck,
+    CmdShellHealthcheck,
 )
 from containup.utils.absolute_paths import to_absolute_path
 
@@ -61,13 +67,15 @@ class CommandUp:
                     network=cfg.network,
                     restart_policy=cfg.restart,
                     detach=True,
+                    healthcheck=(
+                        None
+                        if cfg.healthcheck is None
+                        else healthcheck_to_docker_spec(cfg.healthcheck)
+                    ),
                 )
             except DockerException as e:
                 logger.error(f"Run container {container_name} : failed: {e}")
                 sys.exit(1)
-
-            if cfg.healthcheck:
-                self._wait_for_health(cfg.healthcheck)
 
     def _ensure_volumes(self):
         for vol in self.stack.mounts.values():
@@ -115,23 +123,6 @@ class CommandUp:
 
         return result
 
-    def _wait_for_health(self, check: Dict[str, Union[str, int]]):
-        url = cast(str, check["url"])
-        interval = cast(int, check.get("interval", 15))
-        timeout = cast(int, check.get("timeout", 2))
-        retries = cast(int, check.get("retries", 15))
-        for attempt in range(retries):
-            try:
-                r = requests.get(url, timeout=timeout)
-                if r.status_code == 200:
-                    logger.info(f"{url}")
-                    return
-            except Exception:
-                pass
-            logger.info(f"[WAIT] {url} ({attempt + 1}/{retries})")
-            time.sleep(interval)
-        logger.info(f"[FAIL] {url} après {retries} tentatives.")
-
     def _build_mounts(self, volume_specs: ServiceMounts) -> List[Mount]:
         result: list[Mount] = []
         for m in volume_specs:
@@ -178,3 +169,47 @@ class CommandUp:
 
 def get_docker_volumes(client: docker.DockerClient) -> list[Volume]:
     return client.volumes.list()  # type: ignore[reportUnnecessaryCast]
+
+
+def healthcheck_to_docker_spec(item: HealthCheck) -> Dict[str, Any]:
+
+    interval: int = duration_to_nano(item.options.interval)
+    timeout: int = duration_to_nano(item.options.timeout)
+    retries: int = item.options.retries
+    start_period: int = duration_to_nano(item.options.start_period)
+
+    if isinstance(item, InheritHealthcheck):
+        return {
+            "test": [],
+            "interval": interval,
+            "timeout": timeout,
+            "retries": retries,
+            "start_period": start_period,
+        }
+    elif isinstance(item, NoneHealthcheck):
+        return {
+            "test": ["NONE"],
+            "interval": interval,
+            "timeout": timeout,
+            "retries": retries,
+            "start_period": start_period,
+        }
+    elif isinstance(item, CmdHealthcheck):
+        return {
+            "test": ["CMD"] + item.command,
+            "interval": interval,
+            "timeout": timeout,
+            "retries": retries,
+            "start_period": start_period,
+        }
+
+    elif isinstance(item, CmdShellHealthcheck):  # type: ignore
+        return {
+            "test": ["CMD-SHELL", item.command],
+            "interval": interval,
+            "timeout": timeout,
+            "retries": retries,
+            "start_period": start_period,
+        }
+
+    raise RuntimeError(f"Unknown type of healthcheck {item}")

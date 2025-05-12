@@ -3,7 +3,7 @@ from typing import Optional
 
 import docker
 
-from containup.stack import (
+from containup.stack.stack import (
     Stack,
 )
 

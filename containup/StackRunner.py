@@ -5,7 +5,7 @@ import docker
 
 from .cli import Config
 
-from .stack import Stack
+from .stack.stack import Stack
 
 from containup.commands.command_up import CommandUp
 from containup.commands.command_down import CommandDown

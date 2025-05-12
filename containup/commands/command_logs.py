@@ -2,7 +2,7 @@ import logging
 
 import docker
 
-from containup.stack import Stack
+from containup.stack.stack import Stack
 
 logger = logging.getLogger(__name__)
 

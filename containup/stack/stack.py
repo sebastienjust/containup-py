@@ -1,12 +1,12 @@
 import logging
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Literal, Optional, TypedDict, Union
+from typing import Dict, List, Literal, Optional, TypedDict, Union
 
-from containup.stack.service_healthcheck import HealthCheck
 from docker.types import DriverConfig
 from typing_extensions import NotRequired
 
-from .cli import Config
+from containup.cli import Config
+from containup.stack.service_healthcheck import HealthCheck
 
 # TODO get that from elswhere
 VERSION = "0.1.0"
@@ -262,102 +262,6 @@ class Service:
     def mounts_all(self) -> ServiceMounts:
         """Get all volumes and mounts in the same format"""
         return self.volumes + self.mounts
-
-
-@dataclass
-class HealthcheckOptions:
-    interval: int
-    """
-    The time to wait between checks in nanoseconds.
-    It should be 0 or at least 1000000 (1 ms)
-    """
-    timeout: int
-    """
-    The time to wait before considering the check to have hung. 
-    It should be 0 or at least 1000000 (1 ms).
-    """
-    retries: int
-    """
-    The number of consecutive failures needed to consider a container 
-    as unhealthy.
-    """
-    start_period: int
-    """
-    Start period for the container to initialize before 
-    starting health-retries countdown in nanoseconds. It should be 0 or 
-    at least 1000000 (1 ms).
-    """
-
-    def as_dict(self) -> Dict[str, int]:
-        return {
-            "interval": self.interval,
-            "timeout": self.timeout,
-            "retries": self.retries,
-            "start_period": self.start_period,
-        }
-
-
-@dataclass
-class InheritHealthcheck:
-    options: HealthcheckOptions
-
-    def to_docker_spec(self) -> Dict[str, Any]:
-        return {
-            "test": [],
-            "interval": self.options.interval,
-            "timeout": self.options.timeout,
-            "retries": self.options.retries,
-            "start_period": self.options.start_period,
-        }
-
-
-@dataclass
-class NoneHealthcheck:
-    options: HealthcheckOptions
-
-    def to_docker_spec(self) -> Dict[str, Any]:
-        return {
-            "test": ["NONE"],
-            "interval": self.options.interval,
-            "timeout": self.options.timeout,
-            "retries": self.options.retries,
-            "start_period": self.options.start_period,
-        }
-
-
-@dataclass
-class CmdHealthcheck:
-    command: List[str]
-    options: HealthcheckOptions
-
-    def to_docker_spec(self) -> Dict[str, Any]:
-        return {
-            "test": ["CMD"] + self.command,
-            "interval": self.options.interval,
-            "timeout": self.options.timeout,
-            "retries": self.options.retries,
-            "start_period": self.options.start_period,
-        }
-
-
-@dataclass
-class CmdShellHealthcheck:
-    command: str
-    options: HealthcheckOptions
-
-    def to_docker_spec(self) -> Dict[str, Any]:
-        return {
-            "test": ["CMD-SHELL", self.command],
-            "interval": self.options.interval,
-            "timeout": self.options.timeout,
-            "retries": self.options.retries,
-            "start_period": self.options.start_period,
-        }
-
-
-HealthCheck = Union[
-    CmdShellHealthcheck, CmdHealthcheck, NoneHealthcheck, InheritHealthcheck
-]
 
 
 @dataclass
