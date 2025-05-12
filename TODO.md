@@ -25,6 +25,11 @@
 
 - 🟦 🔥 Manage container build/rebuild process
 
+- 🟦 🔥 Healthcheck should have an option to wait that service is healthy
+  before continuing on other elements of the stack.
+
+  This should allow managing dependencies between services.
+
 - 🟦 ⚠️ Podman support
 
 - 🟦 💤 Add more options for containers
