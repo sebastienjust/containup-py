@@ -23,7 +23,9 @@
 
 - 🟦 ⚠️ Improve restart syntax
 
-- 🟦 ⚠️ Manage container build/rebuild process
+- 🟦 🔥 Manage container build/rebuild process
+
+- 🟦 ⚠️ Podman support
 
 - 🟦 💤 Add more options for containers
 
