@@ -10,11 +10,11 @@ license = "GPL-3.0-or-later"
 dependencies = ["docker"]
 classifiers = [
     "Development Status :: 3 - Alpha",
-    "Environment :: Console,
+    "Environment :: Console",
     "Intended Audience :: Developers",
     "Topic :: System :: Systems Administration",
     "Topic :: System :: Software Distribution",
-    "Topic :: Software Development :: Build Tools"
+    "Topic :: Software Development :: Build Tools",
     "License :: OSI Approved :: GNU General Public License v3 or later (GPLv3+)",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.9",
