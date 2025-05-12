@@ -1,12 +1,13 @@
 import logging
 from dataclasses import dataclass, field
 from typing import Dict, List, Literal, Optional, TypedDict, Union
-
-from docker.types import DriverConfig
 from typing_extensions import NotRequired
-
 from containup.cli import Config
-from containup.stack.service_healthcheck import HealthCheck
+from .service_healthcheck import HealthCheck
+from .service_ports import ServicePortMappings
+from .service_mounts import ServiceMounts
+from .volume import Volume
+from .network import Network
 
 # TODO get that from elswhere
 VERSION = "0.1.0"
@@ -24,136 +25,6 @@ PortsMapping = Dict[str, int]
 EnvironmentsMapping = Dict[str, str]
 
 Commands = List[str]
-
-
-@dataclass
-class Volume:
-    name: str
-    """Name of the volume. If not specified, the engine generates a name."""
-
-    driver: Optional[str] = None
-    """Name of the driver used to create the volume"""
-
-    driver_opts: Optional[dict[str, str]] = None
-    """Driver options as a key-value dictionary"""
-
-    labels: Optional[dict[str, str]] = None
-    """Labels to set on the volume"""
-
-
-@dataclass
-class BindMount:
-    """
-    Represents a Docker 'bind' mount (host directory mounted into the container).
-    """
-
-    source: str
-    """Absolute path on the host to mount."""
-
-    target: str
-    """Path inside the container where the bind will be mounted."""
-
-    read_only: bool = False
-    """If True, mount is read-only."""
-
-    consistency: Optional[str] = None
-    """Mount consistency mode ('default', 'consistent', 'cached', 'delegated')."""
-
-    propagation: Optional[str] = None
-    """Mount propagation mode with the value [r]private, [r]shared, or [r]slave."""
-
-
-@dataclass
-class VolumeMount:
-    """Represents a Docker volume mount."""
-
-    source: str
-    """Name of the Docker volume."""
-
-    target: str
-    """Path inside the container where the volume will be mounted."""
-
-    read_only: bool = False
-    """If True, volume is mounted read-only."""
-
-    consistency: Optional[str] = None
-    """Mount consistency mode ('default', 'consistent', 'cached', 'delegated')."""
-
-    no_copy: bool = False
-    """False if the volume should be populated with the data from the target. Default: False."""
-
-    labels: Optional[dict[str, str]] = None
-    """Labels to set on the volume"""
-
-    driver_config: Optional[DriverConfig] = None
-    """Name and configuration of the driver used to create the volume."""
-
-
-@dataclass
-class TmpfsMount:
-    """
-    Represents a Docker tmpfs mount (in-memory filesystem).
-    """
-
-    target: str
-    """Path inside the container where the tmpfs will be mounted."""
-
-    read_only: bool = False
-    """If True, tmpfs is mounted read-only."""
-
-    consistency: Optional[str] = None
-    """Mount consistency mode ('default', 'consistent', 'cached', 'delegated')."""
-
-    tmpfs_size: Optional[Union[int, str]] = None
-    """Size of the tmpfs mount (in bytes or as a string like '64m')."""
-
-    tmpfs_mode: Optional[int] = None
-    """Filesystem permission mode (e.g., 1777)."""
-
-
-ServiceMounts = List[Union[VolumeMount, BindMount, TmpfsMount]]
-
-
-@dataclass
-class ServicePortMapping:
-    """
-     Declare a single port mapping for Docker.
-
-    Each mapping corresponds to one container port being exposed on the host.
-    You must create one instance per mapping.
-
-    - If you want to bind a specific host port, set `host_port`.
-    - If you want to bind on a specific IP address/interface, set `host_ip`.
-    - If `host_port` is None, Docker will assign a random free port.
-    - If multiple mappings share the same container port, they will all be included.
-    - Set `protocol` to 'tcp', 'udp', or 'sctp'. Defaults to 'tcp'.
-
-    Unlike docker-compose; we stick to the most minimal configuration options.
-    It means that if you want to open multiple ports, or say, 8080-8090
-    you have to do a loop yourself.
-    """
-
-    container_port: int
-    """The port to expose, inside the container"""
-
-    host_port: Optional[int] = None
-    """The port on the host, outside the container. Use None for random port assignment."""
-
-    host_ip: Optional[str] = None
-    """
-    Optional IP address/interface to bind the port on the host (e.g., '127.0.0.1').
-    If None, Docker will listen on all IPs (0.0.0.0)
-    """
-
-    protocol: str = "tcp"
-    """Protocol for the port mapping. Must be 'tcp', 'udp', or 'sctp'."""
-
-
-def port(inside: int, outside: Optional[int] = None) -> ServicePortMapping:
-    return ServicePortMapping(inside, outside or inside)
-
-
-ServicePortMappings = List[ServicePortMapping]
 
 
 @dataclass
@@ -262,19 +133,6 @@ class Service:
     def mounts_all(self) -> ServiceMounts:
         """Get all volumes and mounts in the same format"""
         return self.volumes + self.mounts
-
-
-@dataclass
-class Network:
-
-    name: str
-    """Name of the network"""
-
-    driver: Optional[str] = None
-    """Name of the driver used to create the network"""
-
-    options: Optional[Dict[str, str]] = None
-    """Driver options as a key-value dictionary"""
 
 
 StockItem = Union[Service, Volume, Network]

@@ -1,14 +1,21 @@
 from containup.stack.stack import (
     Stack as Stack,
     Service as Service,
-    Volume as Volume,
-    Network as Network,
+)
+from containup.stack.network import Network as Network
+from containup.stack.volume import Volume as Volume
+from containup.stack.service_mounts import (
     VolumeMount as VolumeMount,
     BindMount as BindMount,
     TmpfsMount as TmpfsMount,
-    ServicePortMapping as ServicePortMapping,
-    port as port,
 )
+from containup.stack.service_ports import (
+    port as port,
+    ServicePortMapping as ServicePortMapping,
+    ServicePortMappings as ServicePortMappings,
+)
+
+
 from containup.stack.service_healthcheck import (
     HealthCheck as HealthCheck,
     CmdShellHealthcheck as CmdShellHealthcheck,
