@@ -69,8 +69,8 @@ tag_scope = "default"
 pre_commit_hook = ""
 post_commit_hook = ""
 commit = true
-tag = true
-push = true
+tag = false
+push = false
 
 [tool.bumpver.file_patterns]
 "pyproject.toml" = [
