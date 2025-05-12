@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 This project follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 and uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.1] - 2025-05-12
+
+### Changed
+
+- Prepared for first PyPI release: updated metadata, added classifiers and keywords.
+- Added changelog and project automation scripts.
+
 ## [0.1.0] - 2025-05-12
 
 ### Added
