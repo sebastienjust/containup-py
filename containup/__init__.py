@@ -28,4 +28,4 @@ from containup.cli import containup_cli as containup_cli, Config as Config
 from containup.StackRunner import containup_run as containup_run
 
 # Updated by bumpver
-__version__ = "0.1.0"
+__version__ = "0.1.1"
