@@ -6,7 +6,8 @@
         "tests"
     ],
     "exclude": [
-        "**"
+        "venv",
+        "**/__pycache__"
     ],
     "useLibraryCodeForTypes": true,
     "executionEnvironments": [
