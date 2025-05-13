@@ -1,19 +1,13 @@
 import logging
 import sys
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Dict, List, Optional, Tuple, Union
 
 import docker
 from docker.errors import DockerException
 from docker.models.volumes import Volume
 from docker.types import Mount
 
-from containup.stack.service_healthcheck import (
-    CmdHealthcheck,
-    CmdShellHealthcheck,
-    HealthCheck,
-    InheritHealthcheck,
-    NoneHealthcheck,
-)
+from containup.infra.docker.healthcheck import healthcheck_to_docker_spec
 from containup.stack.service_mounts import (
     BindMount,
     ServiceMounts,
@@ -25,7 +19,6 @@ from containup.stack.stack import (
     Stack,
 )
 from containup.utils.absolute_paths import to_absolute_path
-from containup.utils.duration_to_nano import duration_to_nano
 
 logger = logging.getLogger(__name__)
 
@@ -171,47 +164,3 @@ class CommandUp:
 
 def get_docker_volumes(client: docker.DockerClient) -> list[Volume]:
     return client.volumes.list()  # type: ignore[reportUnnecessaryCast]
-
-
-def healthcheck_to_docker_spec(item: HealthCheck) -> Dict[str, Any]:
-
-    interval: int = duration_to_nano(item.options.interval)
-    timeout: int = duration_to_nano(item.options.timeout)
-    retries: int = item.options.retries
-    start_period: int = duration_to_nano(item.options.start_period)
-
-    if isinstance(item, InheritHealthcheck):
-        return {
-            "test": [],
-            "interval": interval,
-            "timeout": timeout,
-            "retries": retries,
-            "start_period": start_period,
-        }
-    elif isinstance(item, NoneHealthcheck):
-        return {
-            "test": ["NONE"],
-            "interval": interval,
-            "timeout": timeout,
-            "retries": retries,
-            "start_period": start_period,
-        }
-    elif isinstance(item, CmdHealthcheck):
-        return {
-            "test": ["CMD"] + item.command,
-            "interval": interval,
-            "timeout": timeout,
-            "retries": retries,
-            "start_period": start_period,
-        }
-
-    elif isinstance(item, CmdShellHealthcheck):  # type: ignore
-        return {
-            "test": ["CMD-SHELL", item.command],
-            "interval": interval,
-            "timeout": timeout,
-            "retries": retries,
-            "start_period": start_period,
-        }
-
-    raise RuntimeError(f"Unknown type of healthcheck {item}")
