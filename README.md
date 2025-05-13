@@ -10,7 +10,7 @@ Define and run Docker Compose-like stacks entirely in Python. Include your envir
 [![PyPI version](https://img.shields.io/pypi/v/containup)](https://pypi.org/project/containup/)
 [![Downloads/month](https://static.pepy.tech/badge/containup/month)](https://pepy.tech/project/containup)
 [![License: GPL-3.0-or-later](https://img.shields.io/badge/License-GPL%20v3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0.html)
-[![CI](https://github.com/sebastienjust/containup-py/actions/workflows/test.yml/badge.svg)](https://github.com/sebastienjust/containup-py/actions/workflows/test.yml)
+[![CI](https://github.com/sebastienjust/containup-py/actions/workflows/python-publish.yml/badge.svg)](https://github.com/sebastienjust/containup-py/actions/workflows/python-publish.yml)
 
 ## Motivation
 
