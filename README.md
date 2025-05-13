@@ -100,7 +100,7 @@ pip install git+https://github.com/sebastienjust/containup-py.git
 #!/usr/bin/env python3
 
 # Elements to import
-from containup import Stack, Service, Volume, Network, containup_cli, containup_run, VolumeMount
+from containup import Stack, Service, Volume, Network, containup_run, VolumeMount
 import logging
 
 # Configure logging so you can have log output as you wish
@@ -108,11 +108,6 @@ logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s %(name)s [%(levelname)s] %(message)s"
 )
-
-# Tell containup to handle the command line. It will parse what it needs
-# then give you back your own "extra arguments" in config.extra_args.
-# Then, you can parse them with, for example with Python's argparse
-config = containup_cli()
 
 # This is your moment, your business logic. You grab what you need from your
 # machine, remote services, command-line arguments, environment variables,
@@ -122,7 +117,7 @@ password = passwords.find("mybddpassword")
 # Define your service, volumes, networks, like you do with docker-compose
 
 # Create the stack (think of a docker-compose file)
-stack = Stack("mystack", config)
+stack = Stack("mystack")
 
 # Then, add elements. Order doesn't matter
 
@@ -153,7 +148,7 @@ stack.add(Service(
 ))
 
 # Now that we have the stack declared, we can run the commands on the stack
-containup_run(stack, config)
+containup_run(stack)
 ```
 
 ### Use your script
@@ -180,53 +175,49 @@ containup_run(stack, config)
 You can add elements to your stack in multiple ways:
 
 ```python
-from containup import Stack, Service, Volume, Network, containup_cli, containup_run
-config = containup_cli()
-stack = Stack("mystack", config)
+from containup import Stack, Service, Volume, Network, containup_run
+stack = Stack("mystack")
 stack.add(Volume("myvolume1"))
 stack.add(Volume("myvolume2"))
 stack.add(Network("network1"))
 stack.add(Network("network2"))
 stack.add(Service(name="myservice",image="nginx:latest"))
-containup_run(stack, config)
+containup_run(stack)
 ```
 
 or you can chain calls as `add` is a builder method:
 
 ```python
-from containup import Stack, Service, Volume, Network, containup_cli, containup_run
-config = containup_cli()
-stack = Stack("mystack", config).add(
+from containup import Stack, Service, Volume, Network, containup_run
+stack = Stack("mystack").add(
     Volume("myvolume2")).add(
     Volume("myvolume1")).add(
     Network("network1")).add(
     Network("network2")).add(
     Service(name="myservice", image="nginx:latest"))
-containup_run(stack, config)
+containup_run(stack)
 
 ```
 
 or add elements as lists:
 
 ```python
-from containup import Stack, Service, Volume, Network, containup_cli, containup_run
-config = containup_cli()
-stack = Stack("mystack", config).add([
+from containup import Stack, Service, Volume, Network, containup_run
+stack = Stack("mystack").add([
     Volume("myvolume1"),
     Volume("myvolume2"),
     Network("network1"),
     Network("network2"),
     Service(name="myservice",image="nginx:latest")
 ])
-containup_run(stack, config)
+containup_run(stack)
 ```
 
 or a combination of everything:
 
 ```python
-from containup import Stack, Service, Volume, Network, containup_cli, containup_run
-config = containup_cli()
-stack = Stack("mystack", config).add([
+from containup import Stack, Service, Volume, Network, containup_run
+stack = Stack("mystack").add([
     Volume("myvolume1"),
     Volume("myvolume2"),
     Network("network1"),
@@ -243,7 +234,7 @@ if other_thing:
         Network("monitoring_network"),
         Service(name="monitoring")
     ])
-containup_run(stack, config)
+containup_run(stack)
 ```
 
 ## Creating services tips and tricks
@@ -266,42 +257,39 @@ we declare those like this:
 If the directory to map is a Docker volume, use VolumeMount
 
 ```python
-from containup import Stack, Service, VolumeMount, Volume, containup_cli, containup_run
-config = containup_cli()
-stack = Stack("yourstack", config)
+from containup import Stack, Service, VolumeMount, Volume, containup_run
+stack = Stack("yourstack")
 stack.add(Volume("postgres-data"))
 stack.add(Service(
     "postgres",
     image="postgres:17",
     volumes=[VolumeMount("postgres-data", "/var/lib/postgresql/data")]
 ))
-containup_run(stack, config)
+containup_run(stack)
 ```
 
 If the directory to map is your host's hard drive, it's bind:
 
 ```python
-from containup import Stack, Service, BindMount, containup_cli, containup_run
-config = containup_cli()
-Stack("yourstack", config).add(Service(
+from containup import Stack, Service, BindMount, containup_run
+Stack("yourstack").add(Service(
     "postgres",
     image="postgres:17",
     volumes=[ BindMount("/home/mycomputer/postgres", "/var/lib/postgresql/data") ]
 ))
-containup_run(stack, config)
+containup_run(stack)
 ```
 
 And for TmpFS
 
 ```python
-from containup import Stack, Service, TmpfsMount, containup_cli, containup_run
-config = containup_cli()
+from containup import Stack, Service, TmpfsMount, containup_run
 stack = Stack("yourstack", config).add(Service(
     "postgres",
     image="postgres:17",
     volumes=[TmpfsMount("/var/lib/postgresql/data")]
 ))
-containup_run(stack, config)
+containup_run(stack)
 ```
 
 In each scenario, you can pass additional parameters, but only the parameters
@@ -332,6 +320,26 @@ You have some small factory methods in containup you can use to create the port 
 use them to make your stack structure more readable.
 
 You can also use the full `ServicePortMapping` class that allow precise configuration.
+
+## How to parse your own command line arguments
+
+You can use `containup_cli()` method, near the beginning of your script, to parse command line and get your own arguments.
+Then you get your arguments into `extra_args`.
+
+```python
+import argparse
+import sys
+from containup import containup_cli
+# call our CLI parser
+config = containup_cli()
+# get your extra arguments (it's a list of string like sys.argv[:1])
+myargs = config.extra_args
+# Then, you can parse them with, for example, Python's argparse :
+parser = argparse.ArgumentParser(prog=sys.argv[0])
+# ...
+parser.parse_args(args=myargs)
+
+```
 
 ## Project layout
 
