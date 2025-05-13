@@ -7,7 +7,10 @@ and uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased] 
 
-- Nothing
+### Infrastructure
+
+- Check (lint, test, build) on all Pull Requests
+- Cleanup code in~~~~ publication workflow 
 
 ## [0.1.3] - 2025-05-13
 

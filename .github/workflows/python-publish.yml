@@ -43,13 +43,12 @@ jobs:
         black --check . 
         ruff check .
         pyright
-        pytest
+
+    - name: Run tests
+      run: pytest
 
     - name: Build release distributions
-      run: |
-        # NOTE: put your own distribution build steps here.
-        python -m pip install build
-        python -m build
+      run: python -m build
 
     - name: Check with Twine
       run: twine check dist/*
