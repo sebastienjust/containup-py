@@ -57,6 +57,7 @@ class InheritHealthcheck:
     options: HealthcheckOptions = field(default_factory=lambda: HealthcheckOptions())
 
 
+@dataclass
 class NoneHealthcheck:
     pass
 
