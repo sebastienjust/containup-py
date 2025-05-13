@@ -303,7 +303,6 @@ container services), use explicit notation like this:
 
 ```python
 from containup import Stack, Service, port, containup_cli, containup_run
-config = containup_cli()
 stack = Stack("yourstack", config).add(Service(
     name="caddy",
     image="caddy:latest",
@@ -313,7 +312,7 @@ stack = Stack("yourstack", config).add(Service(
         port(inside=9000),
     ],
 ))
-containup_run(stack, config)
+containup_run(stack)
 ```
 
 You have some small factory methods in containup you can use to create the port mappings,
