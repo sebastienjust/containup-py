@@ -1,13 +1,15 @@
 import logging
 from dataclasses import dataclass, field
 from typing import Dict, List, Literal, Optional, TypedDict, Union
+
 from typing_extensions import NotRequired
+
 from containup.cli import Config
-from .service_healthcheck import HealthCheck
-from .service_ports import ServicePortMappings
-from .service_mounts import ServiceMounts
-from .volume import Volume
 from .network import Network
+from .service_healthcheck import HealthCheck
+from .service_mounts import ServiceMounts
+from .service_ports import ServicePortMappings
+from .volume import Volume
 
 # Initialize logger for this lib. Don't force the logger
 logger = logging.getLogger(__name__)
