@@ -3,9 +3,9 @@
 Define and run Docker Compose-like stacks entirely in Python. Include your environment logic. No YAML.
 
 > [!IMPORTANT]  
-> This is under heavy development: project just started, API is subject to a lot
-> of changes. Issues have been blocked and contribution is limited until
-> a first usable version runs in production.
+> This project is under heavy development: API is subject to a lot
+> of changes. You cannot contribute to issues yet. Please wait until a first minimum viable
+> version is finished and used in production.
 
 [![PyPI version](https://img.shields.io/pypi/v/containup)](https://pypi.org/project/containup/)
 [![Downloads/month](https://static.pepy.tech/badge/containup/month)](https://pepy.tech/project/containup)
@@ -100,7 +100,8 @@ pip install git+https://github.com/sebastienjust/containup-py.git
 #!/usr/bin/env python3
 
 # Elements to import
-from containup import Stack, Service, Volume, Network, containup_cli
+from containup import Stack, Service, Volume, Network, containup_cli, containup_run, VolumeMount
+import logging
 
 # Configure logging so you can have log output as you wish
 logging.basicConfig(
@@ -140,14 +141,14 @@ stack.add(Network("backend"))
 stack.add(Service(
     name="db",
     image="postgres:15",
-    volumes=["dbdata:/var/lib/postgresql/data"],
-    networks=["backend"]
+    volumes=[VolumeMount("dbdata", "/var/lib/postgresql/data")],
+    network="backend"
 ))
 stack.add(Service(
     name="app",
     image="myorg/myapp:latest",
     depends_on=["db"],
-    networks=["backend"],
+    network="backend",
     environment={"DATABASE_URL": f"postgres://user:{password}@db:5432/db"}
 ))
 
