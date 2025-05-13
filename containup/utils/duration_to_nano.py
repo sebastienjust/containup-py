@@ -1,5 +1,7 @@
 import re
 
+MAX_DURATION_NS = 168 * 3600 * 1_000_000_000  # one week, to avoid overflows
+
 
 def duration_to_nano(value: str) -> int:
     units = {
@@ -11,13 +13,20 @@ def duration_to_nano(value: str) -> int:
         "m": 60 * 1_000_000_000,
         "h": 3600 * 1_000_000_000,
     }
-    pattern = re.compile(r"^(\d+(?:\.\d+)?)([a-zµ]+)$", re.IGNORECASE)
+    pattern = re.compile(r"^(\d+)([a-zµ]+)$")
     match = pattern.match(value.strip())
     if not match:
         raise ValueError(f"Invalid duration format: '{value}'")
 
-    number, unit = match.groups()
+    number_as_unsafe_string, unit = match.groups()
     if unit not in units:
         raise ValueError(f"Unknown unit: '{unit}'")
 
-    return int(float(number) * units[unit])
+    # Avoid overflows
+    number = int(number_as_unsafe_string) * units[unit]
+    if number > MAX_DURATION_NS:
+        raise ValueError(
+            f"Duration too large: {number_as_unsafe_string}{unit} ({number}ns). max is {MAX_DURATION_NS}ns"
+        )
+
+    return number
