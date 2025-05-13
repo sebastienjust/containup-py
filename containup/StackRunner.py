@@ -3,7 +3,10 @@ import logging
 
 import docker
 
+from containup.infra.user_interactions_cli import UserInteractionsCLI
+
 from .cli import Config
+from .infra.docker.docker_operator import DockerOperator
 
 from .stack.stack import Stack
 
@@ -24,11 +27,15 @@ class StackRunner:
         self.stack = stack
         self.config = config
         self.client: docker.DockerClient = docker.from_env()
+        self.operator = DockerOperator(self.client)
+        self.user_interactions = UserInteractionsCLI()
 
     # Handle command line parsing and launches the commands on the stack
     def run(self):
         if self.config.command == "up":
-            CommandUp(self.stack, self.client).up(self.config.services)
+            CommandUp(
+                self.stack, self.client, self.operator, self.user_interactions
+            ).up(self.config.services)
         elif self.config.command == "down":
             CommandDown(self.stack, self.client).down(self.config.services)
         elif self.config.command == "logs":
