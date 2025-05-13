@@ -61,6 +61,7 @@ jobs:
         path: dist/
 
   pypi-publish:
+    name: Upload release to PyPI
     runs-on: ubuntu-latest
     needs:
       - release-build
@@ -72,6 +73,7 @@ jobs:
     # For more information, see: https://docs.github.com/en/actions/deployment/targeting-different-environments/using-environments-for-deployment#deployment-protection-rules
     environment:
       name: pypi
+      url: https://pypi.org/p/containup
       # OPTIONAL: uncomment and update to include your PyPI project URL in the deployment status:
       # url: https://pypi.org/p/YOURPROJECT
       #
