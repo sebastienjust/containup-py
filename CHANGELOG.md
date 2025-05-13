@@ -5,26 +5,41 @@ All notable changes to this project will be documented in this file.
 This project follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 and uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [v0.1.2] - 2025-05-13
+## [Unreleased] 
 
-### Changed
+### Documentation
+
+- More accurate [README.md](README.md)
+
+### Infrastructure
+
+- added hyperlinks in [pyproject.toml](pyproject.toml) for better discovery
+- Renamed GitHub workflow
+
+## [0.1.2] - 2025-05-13
+
+### Infrastructure
 
 - First publication on PyPI using GitHub workflows
 
-## [v0.1.1] - 2025-05-13
+## [0.1.1] - 2025-05-13
 
-### Changed
+### Infrastructure
 
 - Integration with GitHub workflows
 
-## [v0.1.1] - 2025-05-12
+## [0.1.1] - 2025-05-12
 
-### Changed
+### Infrastructure
 
 - Prepared for first PyPI release: updated metadata, added classifiers and keywords.
 - Added changelog and project automation scripts.
 
-## [v0.1.0] - 2025-05-12
+## [0.1.0] - 2025-05-12
+
+This is a first public version, still experimental. The API and CLI are subject to change.
+
+Contributions and issues are temporarily limited until the base is stable.
 
 ### Added
 
@@ -37,8 +52,6 @@ and uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - Basic example stack included in README.
 - Development toolchain with `pytest`, `ruff`, `black`, `pyright`.
 
-### Notes
+---
 
-- This is a first public version, still experimental.
-- The API and CLI are subject to change.
-- Contributions and issues are temporarily limited until the base is stable.
+Categories: Added, Changed, Deprecated, Removed, Fixed, Security, Documentation, Infrastructure

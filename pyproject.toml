@@ -33,6 +33,13 @@ keywords = [
     "automation"
 ]
 
+[project.urls]
+Homepage = "https://github.com/sebastienjust/containup-py"
+Repository = "https://github.com/sebastienjust/containup-py.git"
+Issues = "https://github.com/sebastienjust/containup-py/issues"
+Changelog = "https://github.com/sebastienjust/containup-py/blob/main/CHANGELOG.md"
+
+
 [tool.setuptools.packages.find]
 where = ["."]
 include = ["containup*"]
