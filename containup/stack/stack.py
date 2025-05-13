@@ -4,7 +4,7 @@ from typing import Dict, List, Literal, Optional, TypedDict, Union
 
 from typing_extensions import NotRequired
 
-from containup.cli import Config
+
 from .network import Network
 from .service_healthcheck import HealthCheck
 from .service_mounts import ServiceMounts
@@ -138,13 +138,12 @@ StockItem = Union[Service, Volume, Network]
 
 
 class Stack:
-    def __init__(self, name: str, args: Config):
+    def __init__(self, name: str):
         self.name = name
 
         self.mounts: dict[str, Volume] = {}
         self.networks: dict[str, Network] = {}
         self.services: dict[str, Service] = {}
-        self.args: Config = args
 
     def add(self, item_or_list: Union[StockItem, List[StockItem]]):
         items = item_or_list if isinstance(item_or_list, list) else [item_or_list]
