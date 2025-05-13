@@ -7,6 +7,10 @@ and uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased] 
 
+- Nothing
+
+## [0.1.3] - 2025-05-13
+
 ### Documentation
 
 - More accurate [README.md](README.md)
@@ -15,6 +19,7 @@ and uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 - added hyperlinks in [pyproject.toml](pyproject.toml) for better discovery
 - Renamed GitHub workflow
+
 
 ## [0.1.2] - 2025-05-13
 
