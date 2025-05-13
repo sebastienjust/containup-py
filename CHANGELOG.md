@@ -7,10 +7,15 @@ and uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased] 
 
+### Changed
+
+- Enforce integer-only durations and cap maximum duration to 1 week in duration_to_nano. Fixes #2
+
 ### Infrastructure
 
-- Check (lint, test, build) on all Pull Requests
-- Cleanup code in~~~~ publication workflow 
+- Check (lint, test, build) on all Pull Requests. Fixes #1
+- Cleanup code in publication workflow. Fixes #1
+- Improved PR Management. Fixes #1
 
 ## [0.1.3] - 2025-05-13
 
