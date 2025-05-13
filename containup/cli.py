@@ -6,7 +6,7 @@ from typing import List, Optional, cast
 logger = logging.getLogger(__name__)
 
 # Version is managed by bumpver. Do not touch
-_version = "v0.1.1"
+_version = "v0.1.2"
 
 
 class Config:
