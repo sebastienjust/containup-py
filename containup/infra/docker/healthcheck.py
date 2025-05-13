@@ -1,4 +1,4 @@
-from typing import Any, Dict
+from typing import Any, Dict, Union
 
 from containup import (
     HealthCheck,
@@ -11,7 +11,22 @@ from containup import (
 from containup.utils.duration_to_nano import duration_to_nano
 
 
+def healthcheck_to_docker_spec_unsafe(
+    item: Union[HealthCheck, None],
+) -> Union[Dict[str, Any], None]:
+    """
+    Unsafe version of healthcheck_to_docker_spec to allow returning None
+    if there are None healthcheck
+    """
+    if item is None:
+        return None
+    return healthcheck_to_docker_spec(item)
+
+
 def healthcheck_to_docker_spec(item: HealthCheck) -> Dict[str, Any]:
+    """
+    Converts HealthCheck objects to Docker's API style
+    """
 
     options = getattr(item, "options", None) or HealthcheckOptions()
 

@@ -7,7 +7,9 @@ from docker.errors import DockerException
 from docker.models.volumes import Volume
 from docker.types import Mount
 
-from containup.infra.docker.healthcheck import healthcheck_to_docker_spec
+from containup.infra.docker.healthcheck import (
+    healthcheck_to_docker_spec_unsafe,
+)
 from containup.stack.service_mounts import (
     BindMount,
     ServiceMounts,
@@ -62,11 +64,7 @@ class CommandUp:
                     network=cfg.network,
                     restart_policy=cfg.restart,
                     detach=True,
-                    healthcheck=(
-                        None
-                        if cfg.healthcheck is None
-                        else healthcheck_to_docker_spec(cfg.healthcheck)
-                    ),
+                    healthcheck=healthcheck_to_docker_spec_unsafe(cfg.healthcheck),
                 )
             except DockerException as e:
                 logger.error(f"Run container {container_name} : failed: {e}")
