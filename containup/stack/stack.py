@@ -7,13 +7,7 @@ from typing_extensions import NotRequired
 from containup.cli import Config
 from .network import Network
 from .service_healthcheck import HealthCheck
-from .service_mounts import (
-    ServiceMounts,
-    TmpfsMount,
-    VolumeMount,
-    BindMount,
-    DriverConfig,
-)
+from .service_mounts import ServiceMounts
 from .service_ports import ServicePortMappings
 from .volume import Volume
 
