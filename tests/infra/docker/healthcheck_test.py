@@ -5,7 +5,10 @@ from containup import (
     CmdShellHealthcheck,
     CmdHealthcheck,
 )
-from containup.infra.docker.healthcheck import healthcheck_to_docker_spec
+from containup.infra.docker.healthcheck import (
+    healthcheck_to_docker_spec,
+    healthcheck_to_docker_spec_unsafe,
+)
 
 
 def test_healthcheck_inherit():
@@ -111,3 +114,8 @@ def test_healthcheck_no_options():
     assert res["retries"] == 0
     assert res["start_period"] == 0
     assert res["start_interval"] == 0
+
+
+def test_healthcheck_unsafe_none():
+    res = healthcheck_to_docker_spec_unsafe(None)
+    assert res is None
