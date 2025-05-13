@@ -180,28 +180,37 @@ containup_run(stack, config)
 You can add elements to your stack in multiple ways:
 
 ```python
+from containup import Stack, Service, Volume, Network, containup_cli, containup_run
+config = containup_cli()
 stack = Stack("mystack", config)
 stack.add(Volume("myvolume1"))
 stack.add(Volume("myvolume2"))
 stack.add(Network("network1"))
 stack.add(Network("network2"))
 stack.add(Service(name="myservice",image="nginx:latest"))
+containup_run(stack, config)
 ```
 
 or you can chain calls as `add` is a builder method:
 
 ```python
-stack = Stack("mystack", config)
-    .add(Volume("myvolume2"))
-    .add(Volume("myvolume1"))
-    .add(Network("network1"))
-    .add(Network("network2"))
-    .add(Service(name="myservice",image="nginx:latest"))
+from containup import Stack, Service, Volume, Network, containup_cli, containup_run
+config = containup_cli()
+stack = Stack("mystack", config).add(
+    Volume("myvolume2")).add(
+    Volume("myvolume1")).add(
+    Network("network1")).add(
+    Network("network2")).add(
+    Service(name="myservice", image="nginx:latest"))
+containup_run(stack, config)
+
 ```
 
 or add elements as lists:
 
 ```python
+from containup import Stack, Service, Volume, Network, containup_cli, containup_run
+config = containup_cli()
 stack = Stack("mystack", config).add([
     Volume("myvolume1"),
     Volume("myvolume2"),
@@ -209,11 +218,14 @@ stack = Stack("mystack", config).add([
     Network("network2"),
     Service(name="myservice",image="nginx:latest")
 ])
+containup_run(stack, config)
 ```
 
 or a combination of everything:
 
 ```python
+from containup import Stack, Service, Volume, Network, containup_cli, containup_run
+config = containup_cli()
 stack = Stack("mystack", config).add([
     Volume("myvolume1"),
     Volume("myvolume2"),
@@ -231,6 +243,7 @@ if other_thing:
         Network("monitoring_network"),
         Service(name="monitoring")
     ])
+containup_run(stack, config)
 ```
 
 ## Creating services tips and tricks
@@ -253,32 +266,42 @@ we declare those like this:
 If the directory to map is a Docker volume, use VolumeMount
 
 ```python
+from containup import Stack, Service, VolumeMount, Volume, containup_cli, containup_run
+config = containup_cli()
+stack = Stack("yourstack", config)
 stack.add(Volume("postgres-data"))
 stack.add(Service(
     "postgres",
     image="postgres:17",
-    volumes=[ VolumeMount("postgres-data", "/var/lib/postgresql/data") ]
+    volumes=[VolumeMount("postgres-data", "/var/lib/postgresql/data")]
 ))
+containup_run(stack, config)
 ```
 
 If the directory to map is your host's hard drive, it's bind:
 
 ```python
-stack.add(Service(
+from containup import Stack, Service, BindMount, containup_cli, containup_run
+config = containup_cli()
+Stack("yourstack", config).add(Service(
     "postgres",
     image="postgres:17",
     volumes=[ BindMount("/home/mycomputer/postgres", "/var/lib/postgresql/data") ]
 ))
+containup_run(stack, config)
 ```
 
 And for TmpFS
 
 ```python
-stack.add(Service(
+from containup import Stack, Service, TmpfsMount, containup_cli, containup_run
+config = containup_cli()
+stack = Stack("yourstack", config).add(Service(
     "postgres",
     image="postgres:17",
-    volumes=[ TmpfsMount("/var/lib/postgresql/data") ]
+    volumes=[TmpfsMount("/var/lib/postgresql/data")]
 ))
+containup_run(stack, config)
 ```
 
 In each scenario, you can pass additional parameters, but only the parameters
@@ -291,17 +314,18 @@ exposed) and the port "outside" the container (from which you can access the
 container services), use explicit notation like this:
 
 ```python
-from containup import Service, port
-
-stack.add(Service(
+from containup import Stack, Service, port, containup_cli, containup_run
+config = containup_cli()
+stack = Stack("yourstack", config).add(Service(
     name="caddy",
     image="caddy:latest",
     ports=[
-        port(inside=80, ouside=8080),
-        port(inside=443, ouside=8443),
+        port(inside=80, outside=8080),
+        port(inside=443, outside=8443),
         port(inside=9000),
     ],
-)),
+))
+containup_run(stack, config)
 ```
 
 You have some small factory methods in containup you can use to create the port mappings,
@@ -329,7 +353,7 @@ containup-py/
 This library uses the following tools:
 
 | Tool       | Usage                                 |
-| ---------- | ------------------------------------- |
+|------------|---------------------------------------|
 | ruff       | linter                                |
 | black      | formatter                             |
 | pyright    | static typing verification            |
