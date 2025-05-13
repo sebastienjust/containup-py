@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 This project follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 and uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [v0.1.2] - 2025-05-13
+
+### Changed
+
+- First publication on PyPI using GitHub workflows
+
 ## [v0.1.1] - 2025-05-13
 
 ### Changed
