@@ -1,6 +1,6 @@
 import logging
 import sys
-from typing import Dict, List, Optional, Tuple, Union
+from typing import List, Optional
 
 import docker
 from docker.errors import DockerException
@@ -10,7 +10,7 @@ from containup.infra.docker.healthcheck import (
     healthcheck_to_docker_spec_unsafe,
 )
 from containup.infra.docker.mounts import mounts_to_docker_specs
-from containup.stack.service_ports import ServicePortMapping
+from containup.infra.docker.ports import ports_to_docker_spec
 from containup.stack.stack import (
     Stack,
 )
@@ -41,7 +41,6 @@ class CommandUp:
                 pass
 
             logger.info(f"Run container {container_name} : start")
-            typed_ports = self.to_docker_ports(cfg.ports)
             try:
                 self.client.containers.run(
                     image=cfg.image,
@@ -51,7 +50,7 @@ class CommandUp:
                     remove=False,
                     name=container_name,
                     environment=cfg.environment,
-                    ports=typed_ports,  # type: ignore
+                    ports=ports_to_docker_spec(cfg.ports),  # type: ignore
                     mounts=mounts_to_docker_specs(cfg.mounts_all()),
                     network=cfg.network,
                     restart_policy=cfg.restart,
@@ -82,31 +81,6 @@ class CommandUp:
                 self.client.networks.create(
                     name=net.name, driver=net.driver, options=net.options
                 )
-
-    def to_docker_port(
-        self, mapping: ServicePortMapping
-    ) -> Tuple[str, Union[int, Tuple[str, int]]]:
-        key = f"{mapping.container_port}/{mapping.protocol}"
-        value: Union[int, Tuple[str, int]]
-        if mapping.host_ip is None:
-            value = mapping.host_port or mapping.container_port
-        else:
-            value = (mapping.host_ip, mapping.host_port or mapping.container_port)
-        return key, value
-
-    def to_docker_ports(
-        self, mappings: List[ServicePortMapping]
-    ) -> Dict[str, List[Union[int, Tuple[str, int]]]]:
-        result: Dict[str, List[Union[int, Tuple[str, int]]]] = {}
-
-        for m in mappings:
-            key, value = self.to_docker_port(m)
-            if key not in result:
-                result[key] = [value]
-            else:
-                result[key].append(value)
-
-        return result
 
 
 def get_docker_volumes(client: docker.DockerClient) -> list[Volume]:
