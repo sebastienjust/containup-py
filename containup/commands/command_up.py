@@ -5,22 +5,15 @@ from typing import Dict, List, Optional, Tuple, Union
 import docker
 from docker.errors import DockerException
 from docker.models.volumes import Volume
-from docker.types import Mount
 
 from containup.infra.docker.healthcheck import (
     healthcheck_to_docker_spec_unsafe,
 )
-from containup.stack.service_mounts import (
-    BindMount,
-    ServiceMounts,
-    TmpfsMount,
-    VolumeMount,
-)
+from containup.infra.docker.mounts import mounts_to_docker_specs
 from containup.stack.service_ports import ServicePortMapping
 from containup.stack.stack import (
     Stack,
 )
-from containup.utils.absolute_paths import to_absolute_path
 
 logger = logging.getLogger(__name__)
 
@@ -49,7 +42,6 @@ class CommandUp:
 
             logger.info(f"Run container {container_name} : start")
             typed_ports = self.to_docker_ports(cfg.ports)
-            mounts = self._build_mounts(cfg.mounts_all())
             try:
                 self.client.containers.run(
                     image=cfg.image,
@@ -60,7 +52,7 @@ class CommandUp:
                     name=container_name,
                     environment=cfg.environment,
                     ports=typed_ports,  # type: ignore
-                    mounts=mounts,
+                    mounts=mounts_to_docker_specs(cfg.mounts_all()),
                     network=cfg.network,
                     restart_policy=cfg.restart,
                     detach=True,
@@ -114,49 +106,6 @@ class CommandUp:
             else:
                 result[key].append(value)
 
-        return result
-
-    def _build_mounts(self, volume_specs: ServiceMounts) -> List[Mount]:
-        result: list[Mount] = []
-        for m in volume_specs:
-            if isinstance(m, BindMount):
-                result.append(
-                    Mount(
-                        type="bind",
-                        source=to_absolute_path(m.source),
-                        target=m.target,
-                        read_only=m.read_only,
-                        consistency=m.consistency,
-                        propagation=m.propagation,
-                    )
-                )
-            elif isinstance(m, VolumeMount):
-                result.append(
-                    Mount(
-                        type="volume",
-                        source=m.source,
-                        target=m.target,
-                        read_only=m.read_only,
-                        consistency=m.consistency,
-                        no_copy=m.no_copy,
-                        labels=m.labels,
-                        driver_config=m.driver_config,
-                    )
-                )
-            elif isinstance(m, TmpfsMount):  # type: ignore
-                result.append(
-                    Mount(
-                        source=None,
-                        type="tmpfs",
-                        target=m.target,
-                        read_only=m.read_only,
-                        consistency=m.consistency,
-                        tmpfs_size=m.tmpfs_size,
-                        tmpfs_mode=m.tmpfs_mode,
-                    )
-                )
-            else:
-                raise TypeError(f"Unsupported mount type: {type(m)}")
         return result
 
 

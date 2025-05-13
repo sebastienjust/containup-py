@@ -73,4 +73,5 @@ class TmpfsMount:
     """Filesystem permission mode (e.g., 1777)."""
 
 
-ServiceMounts = List[Union[VolumeMount, BindMount, TmpfsMount]]
+ServiceMount = Union[VolumeMount, BindMount, TmpfsMount]
+ServiceMounts = List[ServiceMount]
