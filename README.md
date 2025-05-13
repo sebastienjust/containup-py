@@ -3,9 +3,7 @@
 Define and run Docker Compose-like stacks entirely in Python. Include your environment logic. No YAML.
 
 > [!IMPORTANT]  
-> This project is under heavy development: API is subject to a lot
-> of changes. You cannot contribute to issues yet. Please wait until a first minimum viable
-> version is finished and used in production.
+> ⚠️ This project is under active development — the API may change frequently.
 
 [![PyPI version](https://img.shields.io/pypi/v/containup)](https://pypi.org/project/containup/)
 [![Downloads/month](https://static.pepy.tech/badge/containup/month)](https://pepy.tech/project/containup)
@@ -16,6 +14,7 @@ Define and run Docker Compose-like stacks entirely in Python. Include your envir
 
 - ⭐️ [Star the project](https://github.com/sebastienjust/containup-py) to follow updates.
 - 👍 [React to this issue](https://github.com/sebastienjust/containup-py/issues/14) to signal interest.
+- 💬 Feedback is very welcome! Feel free to open issues or react [here](https://github.com/sebastienjust/containup-py/issues/14) if you're interested.
 
 This helps gauge whether the project is worth pushing further.
 

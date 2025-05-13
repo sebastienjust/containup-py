@@ -7,6 +7,12 @@ and uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+- Nothing
+
+## [0.1.5] - 2025-03-13
+
+- Just some more documentation and links to get feedback on the tool.
+
 ## [0.1.4] - 2025-03-13 
 
 ### Changed
