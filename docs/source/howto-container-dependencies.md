@@ -13,7 +13,7 @@ logic in Python. That means you can:
 2. Wait for it to be fully ready (e.g., by polling a port or making a health check request).
 3. Then launch dependent services.
 
-## Stategy 1: two stacks
+## Stategy: two stacks
 
 Ok it's tricky but it does the job.
 
