@@ -378,11 +378,12 @@ This library uses the following tools:
 
 _Some bookmarks._
 
-Docker documentation and specs :
+Docker documentation and specs:
 
 - [Docker Engine API reference](https://docs.docker.com/reference/api/engine/)
 - [Docker Engine API spec 1.49](https://docs.docker.com/reference/api/engine/version/v1.49/)
 - [Docker Python SDK](https://docker-py.readthedocs.io/en/stable/index.html)
+- [Docker Compose file Reference](https://docs.docker.com/reference/compose-file/)
 
 ## License
 
