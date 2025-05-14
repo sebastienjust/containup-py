@@ -326,25 +326,11 @@ use them to make your stack structure more readable.
 
 You can also use the full `ServicePortMapping` class that allow precise configuration.
 
-## How to parse your own command line arguments
+## How-to
 
-You can use `containup_cli()` method, near the beginning of your script, to parse command line and get your own arguments.
-Then you get your arguments into `extra_args`.
-
-```python
-import argparse
-import sys
-from containup import containup_cli
-# call our CLI parser
-config = containup_cli()
-# get your extra arguments (it's a list of string like sys.argv[:1])
-myargs = config.extra_args
-# Then, you can parse them with, for example, Python's argparse :
-parser = argparse.ArgumentParser(prog=sys.argv[0])
-# ...
-parser.parse_args(args=myargs)
-
-```
+- [Parse your own command line arguments](docs/source/howto-additional-comment-line-args.md)
+- [Handle container inter-dependencies](docs/source/howto-container-dependencies.md)
+- [Launch Multiple Instances of a Service (scale containers)](docs/source/howto-container-scale.md)
 
 ## Project layout
 

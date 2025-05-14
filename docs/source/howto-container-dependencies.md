@@ -1,4 +1,4 @@
-# How-to: Handle container dependencies
+# How-to: Handle container inter-dependencies
 
 In standard Docker Compose, you cannot explicitly wait for a service to finish
 installation or initialization (or heathcheck) before starting others:
