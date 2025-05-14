@@ -7,10 +7,17 @@ and uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Fixed
+
+- Bad command line extra-arguments parsing
+
 ### Documentation
 
 - Installed Sphinx and create documentation project
 - Install Furo as HTML template
+- Added documentation : How to parse command line extra arguments
+- Added documentation : How to manage container inter-dependencies
+- Added documentation : How to manage container scaling
 
 ## [0.1.5] - 2025-03-13
 
