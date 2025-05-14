@@ -323,9 +323,9 @@ stack = Stack("yourstack", config).add(Service(
     name="caddy",
     image="caddy:latest",
     ports=[
-        port(inside=80, outside=8080),
-        port(inside=443, outside=8443),
-        port(inside=9000),
+        port(container_port=80, host_port=8080),
+        port(container_port=443, host_port=8443),
+        port(container_port=9000),
     ],
 ))
 containup_run(stack)
