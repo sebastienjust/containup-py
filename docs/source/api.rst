@@ -40,7 +40,7 @@ Start / stop / build your stack
 
 
 (Optional) Play with command line arguments
----------------------------------------
+-------------------------------------------
 
 .. autofunction:: containup.cli.containup_cli
 

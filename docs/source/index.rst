@@ -15,4 +15,6 @@ Define Docker stacks in Python — no YAML, just code.
 
    why
    api
+   howto-container-dependencies
+
    
