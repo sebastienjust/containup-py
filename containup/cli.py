@@ -20,7 +20,6 @@ class Config:
 
     def __init__(self, args: argparse.Namespace):
         self._args: argparse.Namespace = args
-        print(args.service)
 
     @property
     def extra_args(self) -> List[str]:
@@ -57,7 +56,7 @@ class Config:
     @property
     def services(self) -> list[str]:
         """Returns service as list or empty list"""
-        return self._args.service
+        return self._args.service or []
 
     def validate(self) -> None:
         """Validates configuration and stops programm if there are errors"""
@@ -89,36 +88,38 @@ def containup_cli_args(prog: str, known_args: list[str]) -> Config:
 
     up_parser = subparsers.add_parser("up")
     up_parser.add_argument(
-        "--service", nargs="?", help="If specified, launches only those services"
+        "--service",
+        nargs="*",
+        help="If specified, launches only those services",
     )
-    up_parser.add_argument(
-        "extra_args", nargs=argparse.REMAINDER, help="Your own arguments"
-    )
+    _add_extra_args(up_parser)
 
     down_parser = subparsers.add_parser("down")
     down_parser.add_argument(
-        "--service", nargs="?", help="If specified, stops only those services"
+        "--service", nargs="*", help="If specified, stops only those services"
     )
-    down_parser.add_argument(
-        "extra_args", nargs=argparse.REMAINDER, help="Your own arguments"
-    )
+    _add_extra_args(down_parser)
 
     logs_parser = subparsers.add_parser("logs")
     logs_parser.add_argument("--service", help="Get logs from service", required=True)
-    logs_parser.add_argument(
-        "extra_args", nargs=argparse.REMAINDER, help="Your own arguments"
-    )
+    _add_extra_args(logs_parser)
 
     export_parser = subparsers.add_parser("export")
-    export_parser.add_argument(
-        "extra_args", nargs=argparse.REMAINDER, help="Your own arguments"
-    )
+    _add_extra_args(export_parser)
 
     args = parser.parse_args(args=known_args)
     config = Config(args)
     config.validate()
 
+    print("Namespace: ", args)
+
     return config
+
+
+def _add_extra_args(parser: argparse.ArgumentParser) -> None:
+    parser.add_argument(
+        "extra_args", nargs=argparse.REMAINDER, help="Your own arguments"
+    )
 
 
 if __name__ == "__main__":
@@ -130,16 +131,16 @@ if __name__ == "__main__":
     #
 
     # call our CLI parser
-    config = containup_cli()
+    containup_config = containup_cli()
 
     # get your extra arguments (it's a list of string like sys.argv[:1])
-    extra_args = config.extra_args
+    script_extra_args = containup_config.extra_args
 
     # Then, you can parse them with, for example, Python's argparse :
-    parser = argparse.ArgumentParser(prog="mystack")
-    parser.add_argument("--origin_name")
-    parser.add_argument("--origin_version")
+    sub_parser = argparse.ArgumentParser(prog="mystack")
+    sub_parser.add_argument("--origin_name")
+    sub_parser.add_argument("--origin_version")
 
-    parsed = parser.parse_args(args=extra_args)
+    parsed = sub_parser.parse_args(args=script_extra_args)
     print("origin_name=", parsed.origin_name)
     print("origin_name=", parsed.origin_version)
