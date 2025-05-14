@@ -90,3 +90,6 @@ push = false
 "containup/cli.py" = [
     '_version = "{version}"'
 ]
+"docs/source/conf.py" = [
+    'release = "{version}"'
+]

@@ -1,29 +1,6 @@
 # 🚧 TODO Development
 
-## Current
-
-- 🟥 Unblock healthcheck logic
-
-- 🟩 Rewamp how mounts and volumes are declared in Service
-
-- 🟨 Redesign port mapping to remove confusion
-
-  Port mapping is confusing in Docker, you never know which one is the host
-  and other the container.
-
 ## Backlog
-
-- 🟦 ⚠️ Improve container port syntax
-
-- 🟦 ⚠️ Improve environment variable syntax
-
-- 🟦 ⚠️ Improve network syntax
-
-- 🟦 ⚠️ Improve healthcheck syntax
-
-- 🟦 ⚠️ Improve restart syntax
-
-- 🟦 🔥 Manage container build/rebuild process
 
 - 🟦 🔥 Healthcheck should have an option to wait that service is healthy
   before continuing on other elements of the stack.

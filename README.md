@@ -366,13 +366,24 @@ containup-py/
 This library uses the following tools:
 
 | Tool       | Usage                                 |
-|------------|---------------------------------------|
+| ---------- | ------------------------------------- |
 | ruff       | linter                                |
 | black      | formatter                             |
 | pyright    | static typing verification            |
 | pytest     | unit tests                            |
 | pre-commit | pre-commit hooks                      |
 | bumpver    | Bump version numbers in project files |
+
+## Development external documentation
+
+_Some bookmarks._
+
+Docker documentation and specs:
+
+- [Docker Engine API reference](https://docs.docker.com/reference/api/engine/)
+- [Docker Engine API spec 1.49](https://docs.docker.com/reference/api/engine/version/v1.49/)
+- [Docker Python SDK](https://docker-py.readthedocs.io/en/stable/index.html)
+- [Docker Compose file Reference](https://docs.docker.com/reference/compose-file/)
 
 ## License
 
