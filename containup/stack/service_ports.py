@@ -37,8 +37,20 @@ class ServicePortMapping:
     """Protocol for the port mapping. Must be 'tcp', 'udp', or 'sctp'."""
 
 
-def port(inside: int, outside: Optional[int] = None) -> ServicePortMapping:
-    return ServicePortMapping(inside, outside or inside)
+def port(
+    container_port: int,
+    host_port: Optional[int] = None,
+    host_ip: Optional[str] = None,
+    protocol: str = "tcp",
+) -> ServicePortMapping:
+    """
+    Shortcut factory to create ServicePortMapping.
+
+    Options and signature are the same as ServicePortMapping class.
+
+    See Also: [ServicePortMapping]
+    """
+    return ServicePortMapping(container_port, host_port, host_ip, protocol)
 
 
 ServicePortMappings = List[ServicePortMapping]

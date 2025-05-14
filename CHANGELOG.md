@@ -7,6 +7,10 @@ and uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Breaking changes
+
+- Port syntax improved (Fixes #18)
+
 ### Fixed
 
 - Bad command line extra-arguments parsing

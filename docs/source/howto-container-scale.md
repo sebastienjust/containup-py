@@ -28,11 +28,11 @@ stack = Stack("mystack")
 
 # Create 3 instances of the same service
 for i in range(3):
-    stack.add(Service(
-        name=f"web_{i}",
-        image="nginx:latest",
-        ports=[port(inside=80, outside=8080 + i)]
-    ))
+  stack.add(Service(
+    name=f"web_{i}",
+    image="nginx:latest",
+    ports=[port(container_port=80, host_port=8080 + i)]
+  ))
 
 containup_run(stack)
 ```
