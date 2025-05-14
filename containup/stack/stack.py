@@ -20,7 +20,6 @@ class _RestartPolicy(TypedDict):
     Name: NotRequired[Literal["always", "on-failure"]]
 
 
-PortsMapping = Dict[str, int]
 EnvironmentsMapping = Dict[str, str]
 
 Commands = List[str]
