@@ -2,16 +2,6 @@
 
 ## Backlog
 
-- 🟦 💤 Add more options for containers
-
-- 🟦 💤 Add more options for networks
-
-- 🟦 💤 Add more options for volumes
-
-- 🟦 ❔ Export final configuration as static file
-
-- 🟦 ❔ Implement docker-compose-like log streaming feature
-
 - 🟦 ❔ Ability to launch more containers of the same type (`--scale web=3` for example)
 
   May be it's not useful since you can create loops in your script. You can just
