@@ -1,7 +1,7 @@
 import argparse
 import logging
 import sys
-from typing import List, Optional, cast
+from typing import List, cast
 
 logger = logging.getLogger(__name__)
 
@@ -42,28 +42,9 @@ class Config:
         return cast(str, self._args.command) or ""
 
     @property
-    def serviceOptional(self) -> Optional[str]:
-        """Service to run command onto"""
-        return cast(str, self._args.service) or None
-
-    @property
-    def service(self) -> str:
-        """Service to run command onto, required"""
-        if self.serviceOptional is None:
-            raise RuntimeError("Service name is None")
-        return self.serviceOptional
-
-    @property
     def services(self) -> list[str]:
         """Returns service as list or empty list"""
         return self._args.service or []
-
-    def validate(self) -> None:
-        """Validates configuration and stops programm if there are errors"""
-        if self.command == "logs":
-            if self.serviceOptional is None:
-                logger.error("Service name is required for command logs")
-                sys.exit(1)
 
 
 def containup_cli() -> Config:
@@ -100,18 +81,8 @@ def containup_cli_args(prog: str, known_args: list[str]) -> Config:
     )
     _add_extra_args(down_parser)
 
-    logs_parser = subparsers.add_parser("logs")
-    logs_parser.add_argument("--service", help="Get logs from service", required=True)
-    _add_extra_args(logs_parser)
-
-    export_parser = subparsers.add_parser("export")
-    _add_extra_args(export_parser)
-
     args = parser.parse_args(args=known_args)
     config = Config(args)
-    config.validate()
-
-    print("Namespace: ", args)
 
     return config
 

@@ -4,7 +4,6 @@ from typing import Optional
 import docker
 
 from containup.commands.command_down import CommandDown
-from containup.commands.command_logs import CommandLogs
 from containup.commands.command_up import CommandUp
 from containup.infra.user_interactions_cli import UserInteractionsCLI
 from . import containup_cli
@@ -42,9 +41,5 @@ class StackRunner:
             ).up(self.config.services)
         elif self.config.command == "down":
             CommandDown(self.stack, self.client).down(self.config.services)
-        elif self.config.command == "logs":
-            CommandLogs(self.stack, self.client).logs(self.config.service)
-        elif self.config.command == "export":
-            print("Export -- TODO --")
         else:
             raise RuntimeError(f"Unrcognized command {self.config.command}")
