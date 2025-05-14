@@ -170,8 +170,6 @@ containup_run(stack)
 ./containup-stack.py up --service myservice
 # Stops only myservice
 ./containup-stack.py down --service myservice
-# Get logs of myservice
-./containup-stack.py logs --service myservice
 # Starts everything and give yourself parameters
 # you should not need a lot of parameters since your script can get what it
 # needs programmatically.
