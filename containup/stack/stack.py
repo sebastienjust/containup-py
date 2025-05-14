@@ -43,7 +43,7 @@ class Service:
     image: str
     """The image name to use for the containers."""
 
-    container_name: Optional[str]
+    container_name: Optional[str] = None
     """Name of the container. If missing, the name of the service will be used."""
 
     ports: ServicePortMappings = field(default_factory=lambda: [])
