@@ -14,7 +14,8 @@ Define and run Docker Compose-like stacks entirely in Python. Include your envir
 
 - ⭐️ [Star the project](https://github.com/sebastienjust/containup-py) to follow updates.
 - 👍 [React to this issue](https://github.com/sebastienjust/containup-py/issues/14) to signal interest.
-- 💬 Feedback is very welcome! Feel free to open issues or react [here](https://github.com/sebastienjust/containup-py/issues/14) if you're interested.
+- 💬 Feedback is very welcome! Feel free to open issues or
+  react [here](https://github.com/sebastienjust/containup-py/issues/14) if you're interested.
 
 This helps gauge whether the project is worth pushing further.
 
@@ -65,15 +66,16 @@ stack.add(Service(
     image="myservice:latest",
     volumes=["myservice-data:/opt/application_data"],
     environment={
-       "PG_PASSWORD": gopass("postgres/admin"),
-       "PG_URL": myvault("where_is_postgres")
+        "PG_PASSWORD": gopass("postgres/admin"),
+        "PG_URL": myvault("where_is_postgres")
     }
-    networks=["backend"]
+networks = ["backend"]
 ))
-stack.add(Volume("myservice-data", external = True if dev else False))
+stack.add(Volume("myservice-data", external=True if dev else False))
 ```
 
-This isn’t about replacing Compose. It’s about not having to build a custom orchestration layer around Compose just to support dynamic use cases.
+This isn’t about replacing Compose. It’s about not having to build a custom orchestration layer around Compose just to
+support dynamic use cases.
 
 ## Usage
 
@@ -165,11 +167,11 @@ containup_run(stack)
 # Stops everything
 ./containup-stack.py down
 # Starts only myservice
-./containup-stack.py up myservice
+./containup-stack.py up --service myservice
 # Stops only myservice
-./containup-stack.py down myservice
+./containup-stack.py down --service myservice
 # Get logs of myservice
-./containup-stack.py logs myservice
+./containup-stack.py logs --service myservice
 # Starts everything and give yourself parameters
 # you should not need a lot of parameters since your script can get what it
 # needs programmatically.
@@ -182,12 +184,13 @@ You can add elements to your stack in multiple ways:
 
 ```python
 from containup import Stack, Service, Volume, Network, containup_run
+
 stack = Stack("mystack")
 stack.add(Volume("myvolume1"))
 stack.add(Volume("myvolume2"))
 stack.add(Network("network1"))
 stack.add(Network("network2"))
-stack.add(Service(name="myservice",image="nginx:latest"))
+stack.add(Service(name="myservice", image="nginx:latest"))
 containup_run(stack)
 ```
 
@@ -195,6 +198,7 @@ or you can chain calls as `add` is a builder method:
 
 ```python
 from containup import Stack, Service, Volume, Network, containup_run
+
 stack = Stack("mystack").add(
     Volume("myvolume2")).add(
     Volume("myvolume1")).add(
@@ -209,12 +213,13 @@ or add elements as lists:
 
 ```python
 from containup import Stack, Service, Volume, Network, containup_run
+
 stack = Stack("mystack").add([
     Volume("myvolume1"),
     Volume("myvolume2"),
     Network("network1"),
     Network("network2"),
-    Service(name="myservice",image="nginx:latest")
+    Service(name="myservice", image="nginx:latest")
 ])
 containup_run(stack)
 ```
@@ -223,12 +228,13 @@ or a combination of everything:
 
 ```python
 from containup import Stack, Service, Volume, Network, containup_run
+
 stack = Stack("mystack").add([
     Volume("myvolume1"),
     Volume("myvolume2"),
     Network("network1"),
 ]).add(
-    Service(name="myservice",image="nginx:latest")
+    Service(name="myservice", image="nginx:latest")
 )
 
 if something:
@@ -264,6 +270,7 @@ If the directory to map is a Docker volume, use VolumeMount
 
 ```python
 from containup import Stack, Service, VolumeMount, Volume, containup_run
+
 stack = Stack("yourstack")
 stack.add(Volume("postgres-data"))
 stack.add(Service(
@@ -278,10 +285,11 @@ If the directory to map is your host's hard drive, it's bind:
 
 ```python
 from containup import Stack, Service, BindMount, containup_run
+
 Stack("yourstack").add(Service(
     "postgres",
     image="postgres:17",
-    volumes=[ BindMount("/home/mycomputer/postgres", "/var/lib/postgresql/data") ]
+    volumes=[BindMount("/home/mycomputer/postgres", "/var/lib/postgresql/data")]
 ))
 containup_run(stack)
 ```
@@ -290,6 +298,7 @@ And for TmpFS
 
 ```python
 from containup import Stack, Service, TmpfsMount, containup_run
+
 stack = Stack("yourstack", config).add(Service(
     "postgres",
     image="postgres:17",
@@ -309,6 +318,7 @@ container services), use explicit notation like this:
 
 ```python
 from containup import Stack, Service, port, containup_cli, containup_run
+
 stack = Stack("yourstack", config).add(Service(
     name="caddy",
     image="caddy:latest",
@@ -352,7 +362,7 @@ containup-py/
 This library uses the following tools:
 
 | Tool       | Usage                                 |
-| ---------- | ------------------------------------- |
+|------------|---------------------------------------|
 | ruff       | linter                                |
 | black      | formatter                             |
 | pyright    | static typing verification            |
