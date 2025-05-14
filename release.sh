@@ -31,12 +31,15 @@ python -m build
 echo "==> Chack with twine..."
 twine check dist/*
 
-echo "==> Tag Git and push if successful..."
-git tag "$version" -m "Release $version"
+echo "==> Generate documentation..."
+make -C docs clean-docs
+make -C docs html
+
+echo "==> Push branch if successful..."
 git push origin "$release_branch"
-git push origin "$version"
+
+echo "==> Ready to publish. "
+echo "If successful go to GitHub, create PR, merge and do a release. "
+echo "GitHub actions will publish on PyPI"
 
 
-echo "==> Ready to publish. If successful Prêt à publier. Utilise la commande suivante si tout est OK :"
-echo "twine upload --repository testpypi dist/*"
-echo "twine upload dist/*"

@@ -65,12 +65,20 @@ class NoneHealthcheck:
 @dataclass
 class CmdHealthcheck:
     command: List[str]
+    """
+    Executes directly the command, each part part of the command being separated in the list. 
+
+    This doesn't use a Shell. 
+    Equivalent of ["CMD", args...] in docker-compose, but DON'T add CMD, just your command.
+    Example:  CmdHealthcheck(["program", "-l", "INFO"])
+    """
     options: HealthcheckOptions = field(default_factory=lambda: HealthcheckOptions())
 
 
 @dataclass
 class CmdShellHealthcheck:
     command: str
+    """Executes the specified command in the system's default shell"""
     options: HealthcheckOptions = field(default_factory=lambda: HealthcheckOptions())
 
 

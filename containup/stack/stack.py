@@ -70,8 +70,8 @@ class Service:
 
     We do that because most people know "volumes" and not "mounts"
     """
-    mounts: ServiceMounts = field(default_factory=lambda: [])
 
+    mounts: ServiceMounts = field(default_factory=lambda: [])
     """
     List of strings which each one of its elements specifies a mount volume
 
@@ -93,11 +93,15 @@ class Service:
 
     restart: Optional[_RestartPolicy] = None
     """
+    The behavior to apply when the container exits. The default is not to restart.
+
+    An ever increasing delay (double the previous delay, starting at 100ms) 
+    is added before each restart to prevent flooding the server.
+
     Restart the container when it exits. Configured as a dictionary with keys:
 
-    Name One of on-failure, or always.
-
-    MaximumRetryCount Number of times to restart the container on failure.
+    - Name: "no" "always" "unless-stopped" "on-failure".
+    - MaximumRetryCount Number of times to restart the container on failure.
 
     For example: {"Name": "on-failure", "MaximumRetryCount": 5}
 
@@ -105,28 +109,7 @@ class Service:
     """
 
     healthcheck: Optional[HealthCheck] = None
-    """
-    Specify a test to perform to check that the container is healthy. The dict takes the following keys:
-
-    - test (list or str): Test to perform to determine container health. 
-      If a string is provided, it will be used as a CMD-SHELL command.
-      Possible values:
-        - Empty list: Inherit healthcheck from parent image
-        - ["NONE"]: Disable healthcheck
-        - ["CMD", args...]: exec arguments directly.
-        - ["CMD-SHELL", command]: Run command in the system’s default shell.
-    - interval (int): The time to wait between checks in nanoseconds. 
-      It should be 0 or at least 1000000 (1 ms).
-    - timeout (int): The time to wait before considering the check to have hung. 
-      It should be 0 or at least 1000000 (1 ms).
-    - retries (int): The number of consecutive failures needed to 
-      consider a container as unhealthy.
-    - start_period (int): Start period for the container to initialize before 
-      starting health-retries countdown in nanoseconds. It should be 0 or 
-      at least 1000000 (1 ms).
-
-    TODO We must improve that, it's awful.
-    """
+    """Specify a test to perform to check that the container is healthy."""
 
     def mounts_all(self) -> ServiceMounts:
         """Get all volumes and mounts in the same format"""

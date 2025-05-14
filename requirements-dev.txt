@@ -6,3 +6,4 @@ pre-commit>=4.2.0
 build>=1.2.2
 twine>=6.1.0
 bumpver>=2024.1130
+sphinx>=8.2.3
