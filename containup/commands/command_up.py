@@ -1,8 +1,6 @@
 import logging
 from typing import List, Optional
 
-import docker
-
 from containup.commands.container_operator import (
     ContainerOperator,
     ContainerOperatorException,
@@ -19,12 +17,10 @@ class CommandUp:
     def __init__(
         self,
         stack: Stack,
-        client: docker.DockerClient,
         operator: ContainerOperator,
         user_interactions: UserInteractions,
     ):
         self.stack = stack
-        self.client = client
         self.operator = operator
         self.user_interactions = user_interactions
 

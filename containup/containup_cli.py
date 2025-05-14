@@ -48,6 +48,13 @@ class Config:
 
 
 def containup_cli() -> Config:
+    """
+    Read command line arguments and return a configuration object with list of instructions to execute
+    and tools to parse command arguments.
+
+    Returns:
+        Config containing parsed command line arguments
+    """
     prog = sys.argv[0]
     config = containup_cli_args(prog, sys.argv[1:])
     return config

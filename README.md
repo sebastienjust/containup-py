@@ -41,7 +41,8 @@ It exposes a Python API designed to be declarative — so declarative, in fact, 
 can look almost like Compose YAML:
 
 ```python
-stack.add(Service(
+from containup import Service, Stack
+Stack("mystack").add(Service(
     name="db",
     image="postgres:15",
     volumes=["dbdata:/var/lib/postgresql/data"],
@@ -61,6 +62,8 @@ load configs — everything you already know, or can learn, in Python.
 The API stays close to the mental model of Compose, but frees you from its constraints.
 
 ```python
+from containup import Stack, Service, Volume
+stack = Stack("mystack")
 stack.add(Service(
     name="db",
     image="myservice:latest",
@@ -68,8 +71,8 @@ stack.add(Service(
     environment={
         "PG_PASSWORD": gopass("postgres/admin"),
         "PG_URL": myvault("where_is_postgres")
-    }
-networks = ["backend"]
+    },
+    networks = ["backend"]
 ))
 stack.add(Volume("myservice-data", external=True if dev else False))
 ```

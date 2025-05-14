@@ -1,4 +1,4 @@
-from containup.cli import containup_cli_args
+from containup.containup_cli import containup_cli_args
 
 
 # Tests for up

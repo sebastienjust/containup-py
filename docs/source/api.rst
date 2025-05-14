@@ -36,14 +36,14 @@ Build your stack
 Start / stop / build your stack
 -------------------------------
 
-.. autofunction:: containup.StackRunner.containup_run
+.. autofunction:: containup.containup_run
 
 
 (Optional) Play with command line arguments
 -------------------------------------------
 
-.. autofunction:: containup.cli.containup_cli
+.. autofunction:: containup.containup_cli
 
-.. autoclass:: containup.cli.Config    
+
 
 
