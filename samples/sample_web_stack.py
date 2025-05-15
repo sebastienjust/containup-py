@@ -104,7 +104,10 @@ stack.add(
             "PGADMIN_DEFAULT_EMAIL": "admin@example.com",
             "PGADMIN_DEFAULT_PASSWORD": pgadmin_password,
         },
-        volumes=[VolumeMount("pgadmin_data", "/var/lib/pgadmin")],
+        volumes=[
+            VolumeMount("pgadmin_data", "/var/lib/pgadmin"),
+            BindMount("/etc/postgresql", "/etc/postgresql"),
+        ],
         network="frontend",
         ports=[port(container_port=80, host_port=5050)],
     )

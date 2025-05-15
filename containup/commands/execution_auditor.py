@@ -4,6 +4,7 @@ from dataclasses import dataclass
 from typing import Optional, TextIO
 
 from containup import Service, Network, Volume, Stack, Config, BindMount, VolumeMount
+from containup.stack.service_mounts import ServiceMount
 
 
 @dataclass
@@ -257,7 +258,15 @@ def _render_readable_summary(
                         if isinstance(vol, BindMount)
                         else vol.source if isinstance(vol, VolumeMount) else ""
                     )
-                    lines.append(f"{key} {vol.target} → ({vol.type()}) {source}")
+                    alerts = ", ".join(mount_alert(vol))
+                    rw = (
+                        "(read-write)"
+                        if vol.read_only is None
+                        else "read-only" if vol.read_only else "read-write"
+                    )
+                    lines.append(
+                        f"{key} {vol.target} → ({vol.type()}) {source} {rw} {alerts}"
+                    )
             if c.environment:
                 for i, (k, v) in enumerate(c.environment.items()):
                     key = key_environment_formatted if i == 0 else key_empty_formatted
@@ -266,6 +275,7 @@ def _render_readable_summary(
                 lines.append(
                     f"{key_healthcheck_formatted} {getattr(c.healthcheck, 'command', '')}"
                 )
+
             if c.command:
                 for i, cmd in enumerate(c.command):
                     key = key_commands_formatted if i == 0 else key_empty_formatted
@@ -342,3 +352,17 @@ def image_tag_alert(image: str) -> Optional[str]:
         return f"{emoji_map['unstable']}  image tag is vague :{tag}"
 
     return None
+
+
+def mount_alert(mount: ServiceMount) -> list[str]:
+    """Returns alters on mount"""
+
+    alerts: list[str] = []
+    if isinstance(mount, BindMount):
+        for prefix in ["etc", "var", "home", "root"]:
+            if mount.source.startswith("/" + prefix):
+                alerts.append("❌  sensitive hors path")
+        if mount.read_only is None:
+            alerts.append("⚠️  default to read-write, make it explicit")
+
+    return alerts

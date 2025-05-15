@@ -15,7 +15,7 @@ class BindMount:
     target: str
     """Path inside the container where the bind will be mounted."""
 
-    read_only: bool = False
+    read_only: Optional[bool] = None
     """If True, mount is read-only."""
 
     consistency: Optional[str] = None
@@ -39,7 +39,7 @@ class VolumeMount:
     target: str
     """Path inside the container where the volume will be mounted."""
 
-    read_only: bool = False
+    read_only: Optional[bool] = None
     """If True, volume is mounted read-only."""
 
     consistency: Optional[str] = None
@@ -68,7 +68,7 @@ class TmpfsMount:
     target: str
     """Path inside the container where the tmpfs will be mounted."""
 
-    read_only: bool = False
+    read_only: Optional[bool] = None
     """If True, tmpfs is mounted read-only."""
 
     consistency: Optional[str] = None
