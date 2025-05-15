@@ -261,7 +261,10 @@ It prints a clean, readable preview of what the stack will create:
 
 #### What is this useful for?
 
-Dry-run is more than a preview. It’s your **plan + linter** in one.
+`--dry-run` is more than a preview. It’s your **plan + linter** in one.
+
+`--dry-run` is for humans.  It gives you a clear, shareable, verifiable view of what
+Containup will do — before it does it.
 
 You can use it to:
 
@@ -269,7 +272,10 @@ You can use it to:
 * explain what will happen in a merge request or ops meeting,
 * share a deployment plan with colleagues,
 * validate changes in CI before they reach production,
-* catch mistakes like bad tags, dangerous mounts, or missing readiness checks.
+* as DevOps, validate changes made by developers,
+* as Developer, communicate with DevOps,
+* catch mistakes like bad tags, dangerous mounts, or missing readiness checks,
+* document in seconds.
 
 In practice, this removes a common DevOps fear:
 
@@ -293,12 +299,6 @@ Upcoming (not in this release)
 
 These checks don’t block anything. They just make the implicit explicit — so you can catch it early, 
 and fix it while it’s still safe.
-
-### In short
-
-`--dry-run` is for humans.
-It gives you a clear, shareable, verifiable view of what Containup will do — before it does it.
-Just like `terraform plan`, `ansible --check`, or `helm template`, it’s the tool that turns guesswork into confidence.
 
 
 ## ▶️ Use your script
