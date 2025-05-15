@@ -42,4 +42,5 @@ class StackRunner:
             CommandDown(self.stack, self.operator).down(self.config.services)
         else:
             raise RuntimeError(f"Unrcognized command {self.config.command}")
-        self._auditor.flush()
+        if self.config.dry_run:
+            self._auditor.flush()
