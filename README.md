@@ -19,6 +19,41 @@ Define and run Docker Compose-like stacks entirely in Python. Include your envir
 
 This helps gauge whether the project is worth pushing further.
 
+## Summary
+
+😵‍💫 **Before**
+
+* `docker-compose.yml` + `.env` + `bash` + `make` + `envsubst` + YAML templating
+* Can't branch, can't loop, can't read a secret, can't debug
+* One file per env, or one giant template nobody wants to touch
+* You pray it works, you don't know what will run
+
+🧩 "dev", "staging", "prod" — and 5 hacks per environment
+
+---
+
+😌 **After**
+
+```python
+if env == "prod":
+    stack.add(Service(name="db", image="postgres", environment={"PASS": get_secret()}))
+```
+
+```bash
+./stack.py up --dry-run   # ✅ dry-run to inspect  
+./stack.py up             # 🚀 launch your stack
+```
+
+🧠 One Python script
+🔁 Conditionals, loops, logic
+🔐 Secrets, context-aware behavior
+🧪 Testable, readable, controlled
+
+**→ From YAML + hacks to real code you can trust.**
+**No glue, no guessing, no mess.**
+
+---
+
 ## Motivations
 
 Docker Compose makes things simple: define services, volumes, networks in a YAML file, then run them.
