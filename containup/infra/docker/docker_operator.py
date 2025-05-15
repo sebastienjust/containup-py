@@ -4,7 +4,10 @@ import docker.models.networks
 import docker.models.volumes
 from docker.errors import DockerException
 
-from containup import Volume, Network, Service
+from containup.stack.volume import Volume
+from containup.stack.network import Network
+from containup.stack.stack import Service
+from containup.utils.secret_value import SecretValue
 from containup.commands.container_operator import (
     ContainerOperator,
     ContainerOperatorException,
@@ -43,6 +46,13 @@ class DockerOperator(ContainerOperator):
     def container_run(self, service: Service):
         """Run a container like docker run"""
         container_name = service.container_name or service.name
+
+        # time to reveal secrects, no other way is possible to give them to docker
+        env = {
+            key: value.reveal() if isinstance(value, SecretValue) else value
+            for key, value in service.environment.items()
+        }
+
         try:
             self.client.containers.run(
                 image=service.image,
@@ -51,7 +61,7 @@ class DockerOperator(ContainerOperator):
                 stderr=False,
                 remove=False,
                 name=container_name,
-                environment=service.environment,
+                environment=env,
                 ports=ports_to_docker_spec(service.ports),  # type: ignore
                 mounts=mounts_to_docker_specs(service.mounts_all()),
                 network=service.network,

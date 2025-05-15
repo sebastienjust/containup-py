@@ -73,3 +73,8 @@ class SecretValue:
 
     def __getitem__(self, key):  # type: ignore
         raise TypeError("SecretValue does not support item access")
+
+
+def secret(placeholder: str, value: str) -> SecretValue:
+    """Creates a secret (password, apikey, etc.). Use that in your environment variables."""
+    return SecretValue(placeholder, value)
