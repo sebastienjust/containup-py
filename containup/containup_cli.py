@@ -46,6 +46,20 @@ class Config:
         """Returns service as list or empty list"""
         return self._args.service or []
 
+    @property
+    def dry_run(self) -> bool:
+        """Returns whether or not to execute the command in dry-run mode"""
+        return bool(getattr(self._args, "dry_run", False))
+
+    def __repr__(self) -> str:
+        return (
+            f"Config(command={self.command!r}, "
+            f"services={self.services!r}, "
+            f"dry_run={self.dry_run!r}, "
+            f"extra_args={self.extra_args!r}, "
+            f"args={self._args!r})"
+        )
+
 
 def containup_cli() -> Config:
     """
@@ -75,6 +89,7 @@ def containup_cli_args(prog: str, known_args: list[str]) -> Config:
     subparsers = parser.add_subparsers(dest="command", required=True)
 
     up_parser = subparsers.add_parser("up")
+    _add_dry_run(up_parser)
     up_parser.add_argument(
         "--service",
         nargs="*",
@@ -83,6 +98,7 @@ def containup_cli_args(prog: str, known_args: list[str]) -> Config:
     _add_extra_args(up_parser)
 
     down_parser = subparsers.add_parser("down")
+    _add_dry_run(down_parser)
     down_parser.add_argument(
         "--service", nargs="*", help="If specified, stops only those services"
     )
@@ -92,6 +108,14 @@ def containup_cli_args(prog: str, known_args: list[str]) -> Config:
     config = Config(args)
 
     return config
+
+
+def _add_dry_run(parser: argparse.ArgumentParser) -> None:
+    parser.add_argument(
+        "--dry-run",
+        action="store_true",
+        help="If specified, launch command in dry-run mode",
+    )
 
 
 def _add_extra_args(parser: argparse.ArgumentParser) -> None:
@@ -110,6 +134,7 @@ if __name__ == "__main__":
 
     # call our CLI parser
     containup_config = containup_cli()
+    print(containup_config)
 
     # get your extra arguments (it's a list of string like sys.argv[:1])
     script_extra_args = containup_config.extra_args
@@ -121,4 +146,4 @@ if __name__ == "__main__":
 
     parsed = sub_parser.parse_args(args=script_extra_args)
     print("origin_name=", parsed.origin_name)
-    print("origin_name=", parsed.origin_version)
+    print("origin_version=", parsed.origin_version)

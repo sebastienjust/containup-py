@@ -11,6 +11,10 @@ and uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 - Port syntax improved (Fixes #18)
 
+### Breaking changes
+
+- dry-run feature: previsualize how the stack will be built. Generates a report on stdio (console output).
+
 ### Fixed
 
 - Bad command line extra-arguments parsing

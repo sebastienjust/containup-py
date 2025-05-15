@@ -15,7 +15,7 @@ class BindMount:
     target: str
     """Path inside the container where the bind will be mounted."""
 
-    read_only: bool = False
+    read_only: Optional[bool] = None
     """If True, mount is read-only."""
 
     consistency: Optional[str] = None
@@ -23,6 +23,10 @@ class BindMount:
 
     propagation: Optional[str] = None
     """Mount propagation mode with the value [r]private, [r]shared, or [r]slave."""
+
+    @staticmethod
+    def type():
+        return "bind"
 
 
 @dataclass
@@ -35,7 +39,7 @@ class VolumeMount:
     target: str
     """Path inside the container where the volume will be mounted."""
 
-    read_only: bool = False
+    read_only: Optional[bool] = None
     """If True, volume is mounted read-only."""
 
     consistency: Optional[str] = None
@@ -50,6 +54,10 @@ class VolumeMount:
     driver_config: Optional[DriverConfig] = None
     """Name and configuration of the driver used to create the volume."""
 
+    @staticmethod
+    def type():
+        return "volume"
+
 
 @dataclass
 class TmpfsMount:
@@ -60,7 +68,7 @@ class TmpfsMount:
     target: str
     """Path inside the container where the tmpfs will be mounted."""
 
-    read_only: bool = False
+    read_only: Optional[bool] = None
     """If True, tmpfs is mounted read-only."""
 
     consistency: Optional[str] = None
@@ -71,6 +79,10 @@ class TmpfsMount:
 
     tmpfs_mode: Optional[int] = None
     """Filesystem permission mode (e.g., 1777)."""
+
+    @staticmethod
+    def type():
+        return "tmp"
 
 
 ServiceMount = Union[VolumeMount, BindMount, TmpfsMount]

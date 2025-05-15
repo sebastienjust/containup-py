@@ -19,7 +19,7 @@ Define and run Docker Compose-like stacks entirely in Python. Include your envir
 
 This helps gauge whether the project is worth pushing further.
 
-## Motivation
+## Motivations
 
 Docker Compose makes things simple: define services, volumes, networks in a YAML file, then run them.
 But the moment you try to do anything dynamic — use secrets, switch images based on environments,
@@ -76,9 +76,21 @@ stack.add(Service(
 ))
 stack.add(Volume("myservice-data", external=True if dev else False))
 ```
+> [!NOTE]
+> Containup isn’t a replacement for Compose — it’s what you reach for when Compose stops being enough.
+> If your `docker-compose.yml` still works fine, keep using it.
+> But when you start juggling `.env` files, `envsubst`, wrapper scripts, or conditionals across environments — that’s where Containup makes things simpler, not harder.
 
-This isn’t about replacing Compose. It’s about not having to build a custom orchestration layer around Compose just to
-support dynamic use cases.
+### Know what you do before launching
+
+One key pain point with Compose — and container tooling in general — is that you
+often don’t know exactly what’s going to be created until you run it.
+
+In DevOps workflows, this lack of visibility is risky. You want a plan, not just a launch.
+
+That’s why Containup includes a human-readable `--dry-run` mode: it shows exactly what would be 
+created — volumes, networks, containers, ports — **and emits warnings** when something looks off: 
+an image without a tag, a container without a healthcheck, a writable bind mount on a critical path…
 
 ## Usage
 
@@ -161,8 +173,135 @@ stack.add(Service(
 # Now that we have the stack declared, we can run the commands on the stack
 containup_run(stack)
 ```
+### ☕ `--dry-run`
 
-### Use your script
+```bash
+# Check everything
+./containup-stack.py up --dry-run 
+```
+
+One recurring pain point in container workflows is this:  
+You don’t know what will be created — until it’s already running.
+
+Docker Compose doesn’t show you a plan. It just runs.  
+You launch, then you find out what happened.
+
+But DevOps needs visibility. Whether you're scripting a deployment, reviewing a config, 
+debugging CI, or syncing with a teammate — you want to **see first, run second**.
+
+Containup provides a `--dry-run` mode to do exactly that.
+It prints a clean, readable preview of what the stack will create:
+**volumes, networks, containers, ports, mounts, environment variables**, and more — without touching your system.
+
+
+```text
+🧱 Stack: odoo-stack (dry-run) up 
+
+📦 Volumes
+  - pgdata       : 🟢 created   
+  - odoo_data    : 🟢 created   
+  - pgadmin_data : 🟢 created   
+
+🔗 Networks
+  - frontend     : 🟢 created  
+  - backend      : 🟢 created  
+
+🚀 Containers
+
+1. postgres (image: postgres:15)
+   Network    : backend
+   Ports      : 5432/tcp
+   Volumes    : /var/lib/postgresql/data → (volume) pgdata (read-write) 
+   Environment: POSTGRES_DB=postgres
+                POSTGRES_USER=odoo
+                POSTGRES_PASSWORD=defaultpass
+   Healthcheck: {'pg_isready -U odoo'}
+
+2. redis (image: redis:7)
+   Network    : backend
+   Ports      : 6379/tcp
+   Healthcheck: 🛈 no healthcheck
+
+3. odoo (image: odoo:16)
+   Network    : backend
+   Ports      : 8069:8069/tcp
+   Volumes    : /var/lib/odoo → (volume) odoo_data (read-write) 
+                /var/logs/odo → (bind) /opt/tmp/logs read-only 
+   Environment: HOST=0.0.0.0
+                PORT=8069
+                USER=odoo
+                PASSWORD=defaultpass
+                PGHOST=postgres
+                PGUSER=odoo
+                PGPASSWORD=defaultpass
+   Healthcheck: 🛈 no healthcheck
+
+4. pgadmin (image: dpage/pgadmin4 ❌  image has no explicit tag (defaults to :latest))
+   Network    : frontend
+   Ports      : 5050:80/tcp
+   Volumes    : /var/lib/pgadmin → (volume) pgadmin_data (read-write) 
+                /etc/postgresql → (bind) /etc/postgresql (read-write) ❌  sensitive host path, ⚠️  default to read-write, make it explicit
+   Environment: PGADMIN_DEFAULT_EMAIL=admin@example.com
+                PGADMIN_DEFAULT_PASSWORD=defaultpass
+   Healthcheck: 🛈 no healthcheck
+
+5. traefik (image: traefik:v2.10)
+   Network    : frontend
+   Ports      : 80:80/tcp, 8081:8080/tcp
+   Healthcheck: 🛈 no healthcheck
+   Commands   : --api.insecure=true
+                --providers.docker=true
+                --entrypoints.web.address=:80
+
+
+```
+
+> [!TIP]
+> Un further releases, secrets will be redacted in reports 
+
+#### What is this useful for?
+
+`--dry-run` is more than a preview. It’s your **plan + linter** in one.
+
+`--dry-run` is for humans.  It gives you a clear, shareable, verifiable view of what
+Containup will do — before it does it.
+
+You can use it to:
+
+* debug and understand your stack logic,
+* explain what will happen in a merge request or ops meeting,
+* share a deployment plan with colleagues,
+* validate changes in CI before they reach production,
+* as DevOps, validate changes made by developers,
+* as Developer, communicate with DevOps,
+* catch mistakes like bad tags, dangerous mounts, or missing readiness checks,
+* document in seconds.
+
+In practice, this removes a common DevOps fear:
+
+> *"If I run this, what exactly is it going to do?"*
+
+Dry-run gives you the confidence to say: "Here’s what it will do, line by line."
+
+#### What does it check?
+
+Containup dry-run emits warnings when it sees patterns known to cause trouble:
+
+* ❌ image has no tag (defaults to `:latest`)
+* ⚠️ image uses unstable or vague tag (`dev`, `nightly`, etc.)
+* ❌ bind mount over sensitive host path (`/etc`, `/var`, `/root`)
+* ⚠️ bind mount is read-write by default — make it explicit
+* 🛈 no healthcheck — Docker will consider the service healthy as soon as it starts
+
+Upcoming (not in this release)
+* ⚠️ port exposed without fixed host binding
+* ❌ Environment variables with plaintext secrets
+
+These checks don’t block anything. They just make the implicit explicit — so you can catch it early, 
+and fix it while it’s still safe.
+
+
+## ▶️ Use your script
 
 ```bash
 # Starts everything
