@@ -3,6 +3,8 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from typing import Optional, TextIO
 
+from docker.types import Healthcheck
+
 from containup import Service, Network, Volume, Stack, Config, BindMount, VolumeMount
 from containup.stack.service_mounts import ServiceMount
 
@@ -271,10 +273,12 @@ def _render_readable_summary(
                 for i, (k, v) in enumerate(c.environment.items()):
                     key = key_environment_formatted if i == 0 else key_empty_formatted
                     lines.append(f"{key} {k}={v}")
-            if c.healthcheck:
-                lines.append(
-                    f"{key_healthcheck_formatted} {getattr(c.healthcheck, 'command', '')}"
-                )
+            healtcheck = (
+                "🛈 no healthcheck"
+                if c.healthcheck is None
+                else {getattr(c.healthcheck, "command", "")}
+            )
+            lines.append(f"{key_healthcheck_formatted} {healtcheck}")
 
             if c.command:
                 for i, cmd in enumerate(c.command):
@@ -355,14 +359,22 @@ def image_tag_alert(image: str) -> Optional[str]:
 
 
 def mount_alert(mount: ServiceMount) -> list[str]:
-    """Returns alters on mount"""
+    """Returns alerts on mount"""
 
     alerts: list[str] = []
     if isinstance(mount, BindMount):
         for prefix in ["etc", "var", "home", "root"]:
             if mount.source.startswith("/" + prefix):
-                alerts.append("❌  sensitive hors path")
+                alerts.append("❌  sensitive host path")
         if mount.read_only is None:
             alerts.append("⚠️  default to read-write, make it explicit")
 
+    return alerts
+
+
+def healthcheck_alerts(healthcheck: Optional[Healthcheck]) -> list[str]:
+    """Returns alerts on healthcheck"""
+    alerts: list[str] = []
+    if healthcheck is None:
+        alerts.append("⚠️  no health check")
     return alerts
