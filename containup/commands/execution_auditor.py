@@ -186,8 +186,10 @@ def _render_readable_summary(
         f"🧱 Stack: {stack.name} (dry-run) {config.command} {services_annotated}\n"
     )
 
-    max_key_len_volumes = max(len(n.volume_id) for n in evt_groups.volumes)
-    max_key_len_networks = max(len(n.network_id) for n in evt_groups.networks)
+    max_key_len_volumes = max((len(n.volume_id) for n in evt_groups.volumes), default=0)
+    max_key_len_networks = max(
+        (len(n.network_id) for n in evt_groups.networks), default=0
+    )
     max_key_len = max(max_key_len_volumes, max_key_len_networks)
 
     evt_volumes: list[VolumeEvts] = evt_groups.volumes
