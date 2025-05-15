@@ -30,9 +30,7 @@ This helps gauge whether the project is worth pushing further.
 * You pray it works, you don't know what will run 
 * "dev", "staging", "prod" — and 5 hacks per environment 🥵
 
----
-
-> [!TIP]
+> [!NOTE]
 > Describing dynamic systems in static files that can’t even branch.
 > What could go wrong? 🙃
 
