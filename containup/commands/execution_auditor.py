@@ -1,12 +1,17 @@
 import sys
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
-from typing import Optional, TextIO
+from typing import Optional, TextIO, Union
 
 from docker.types import Healthcheck
 
-from containup import Service, Network, Volume, Stack, Config, BindMount, VolumeMount
+from containup.utils.secret_value import SecretValue
+from containup.containup_cli import Config
+from containup.stack.network import Network
+from containup.stack.service_mounts import BindMount, VolumeMount
 from containup.stack.service_mounts import ServiceMount
+from containup.stack.stack import Service, Stack
+from containup.stack.volume import Volume
 
 
 @dataclass
@@ -272,7 +277,8 @@ def _render_readable_summary(
             if c.environment:
                 for i, (k, v) in enumerate(c.environment.items()):
                     key = key_environment_formatted if i == 0 else key_empty_formatted
-                    lines.append(f"{key} {k}={v}")
+                    alerts = ", ".join(secrets_alerts(k, v))
+                    lines.append(f"{key} {k}={v} {alerts}")
             healtcheck = (
                 "🛈 no healthcheck"
                 if c.healthcheck is None
@@ -356,6 +362,19 @@ def image_tag_alert(image: str) -> Optional[str]:
         return f"{emoji_map['unstable']}  image tag is vague :{tag}"
 
     return None
+
+
+def secrets_alerts(k: str, v: Union[str, SecretValue]) -> list[str]:
+    alerts: list[str] = []
+    secret_like_keys = {"password", "token", "secret", "key", "pwd", "pass"}
+    lowered = k.lower()
+    if any(hint in lowered for hint in secret_like_keys):
+        if not isinstance(v, SecretValue):
+            alerts.append(
+                f"❌ {k} looks like a secret but is passed as plaintext — use containup.secret() to redact it safely"
+            )
+
+    return alerts
 
 
 def mount_alert(mount: ServiceMount) -> list[str]:
