@@ -1,6 +1,8 @@
 #!/bin/bash
 set -e
 
+# Script used to prepare release and do version bumping
+
 echo "==> Create temp branch for release..."
 git checkout -b release-temp
 
@@ -14,8 +16,9 @@ release_branch="release/$version"
 echo "==> Rename temporary branch : $release_branch"
 git branch -m "$release_branch"
 
-echo "==> Remove old builds..."
+echo "==> Remove old builds and generated stuff..."
 rm -rf dist/ build/ ./*.egg-info
+make -C docs clean-docs
 
 echo "==> Format and lint..."
 black .
@@ -32,7 +35,6 @@ echo "==> Chack with twine..."
 twine check dist/*
 
 echo "==> Generate documentation..."
-make -C docs clean-docs
 make -C docs html
 
 echo "==> Push branch if successful..."

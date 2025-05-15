@@ -24,6 +24,10 @@ class BindMount:
     propagation: Optional[str] = None
     """Mount propagation mode with the value [r]private, [r]shared, or [r]slave."""
 
+    @staticmethod
+    def type():
+        return "bind"
+
 
 @dataclass
 class VolumeMount:
@@ -50,6 +54,10 @@ class VolumeMount:
     driver_config: Optional[DriverConfig] = None
     """Name and configuration of the driver used to create the volume."""
 
+    @staticmethod
+    def type():
+        return "volume"
+
 
 @dataclass
 class TmpfsMount:
@@ -71,6 +79,10 @@ class TmpfsMount:
 
     tmpfs_mode: Optional[int] = None
     """Filesystem permission mode (e.g., 1777)."""
+
+    @staticmethod
+    def type():
+        return "tmp"
 
 
 ServiceMount = Union[VolumeMount, BindMount, TmpfsMount]

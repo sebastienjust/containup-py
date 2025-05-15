@@ -6,7 +6,16 @@ from containup.commands.container_operator import (
     ContainerOperator,
     ContainerOperatorException,
 )
-from containup.commands.execution_auditor import ExecutionAuditor
+from containup.commands.execution_auditor import (
+    ExecutionAuditor,
+    ExecutionEvtContainerExistsCheck,
+    ExecutionEvtContainerRemoved,
+    ExecutionEvtContainerRun,
+    ExecutionEvtVolumeExistsCheck,
+    ExecutionEvtVolumeCreated,
+    ExecutionEvtNetworkCreated,
+    ExecutionEvtNetworkExistsCheck,
+)
 
 
 class DryRunOperator(ContainerOperator):
@@ -20,13 +29,13 @@ class DryRunOperator(ContainerOperator):
 
     def container_exists(self, container_name: str) -> bool:
         result = container_name in self._containers
-        self._auditor.record(f"container exists: {container_name}={result}")
+        self._auditor.record(ExecutionEvtContainerExistsCheck(container_name, result))
         return result
 
     def container_remove(self, container_name: str):
         try:
             del self._containers[container_name]
-            self._auditor.record(f"container removed: {container_name}")
+            self._auditor.record(ExecutionEvtContainerRemoved(container_name))
         except KeyError as e:
             raise ContainerOperatorException(
                 f"Container {container_name} not found"
@@ -35,24 +44,26 @@ class DryRunOperator(ContainerOperator):
     def container_run(self, service: Service):
         container_id: str = service.container_name or service.name
         self._containers[container_id] = DryRunContainer(container_id, service)
-        self._auditor.record(f"container run: {service}")
+        self._auditor.record(ExecutionEvtContainerRun(container_id, service))
 
     def volume_exists(self, volume_name: str) -> bool:
         result = volume_name in self._volumes
-        self._auditor.record(f"volume exists: {volume_name}={result}")
+        self._auditor.record(
+            ExecutionEvtVolumeExistsCheck(volume_id=volume_name, exists=result)
+        )
         return result
 
     def volume_create(self, volume: Volume) -> None:
-        self._auditor.record(f"volume created: {volume.name}")
+        self._auditor.record(ExecutionEvtVolumeCreated(volume.name, volume))
         self._volumes[volume.name] = DryRunVolume(volume.name, volume)
 
     def network_exists(self, network_name: str) -> bool:
         result = network_name in self._networks
-        self._auditor.record(f"network exists: {network_name}={result}")
+        self._auditor.record(ExecutionEvtNetworkExistsCheck(network_name, result))
         return result
 
     def network_create(self, network: Network) -> None:
-        self._auditor.record(f"network created: {network.name}")
+        self._auditor.record(ExecutionEvtNetworkCreated(network.name, network))
         self._networks[network.name] = DryRunNetwork(network.name, network)
 
 

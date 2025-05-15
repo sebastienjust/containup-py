@@ -2,7 +2,16 @@
 
 import os
 
-from containup import Stack, Service, Volume, Network, containup_run, VolumeMount, port
+from containup import (
+    Stack,
+    Service,
+    Volume,
+    Network,
+    containup_run,
+    VolumeMount,
+    port,
+    BindMount,
+)
 from containup.stack.service_healthcheck import CmdShellHealthcheck, HealthcheckOptions
 
 # logging.basicConfig(level=logging.INFO, format="%(asctime)s %(message)s")
@@ -77,7 +86,10 @@ stack.add(
             "PGUSER": "odoo",
             "PGPASSWORD": db_password,
         },
-        volumes=[VolumeMount("odoo_data", "/var/lib/odoo")],
+        volumes=[
+            VolumeMount("odoo_data", "/var/lib/odoo"),
+            BindMount("/opt/tmp/logs", "/var/logs/odo", read_only=True),
+        ],
         network="backend",
         ports=[port(container_port=8069, host_port=8069)],
     )

@@ -19,7 +19,7 @@ Define and run Docker Compose-like stacks entirely in Python. Include your envir
 
 This helps gauge whether the project is worth pushing further.
 
-## Motivation
+## Motivations
 
 Docker Compose makes things simple: define services, volumes, networks in a YAML file, then run them.
 But the moment you try to do anything dynamic — use secrets, switch images based on environments,
@@ -76,9 +76,21 @@ stack.add(Service(
 ))
 stack.add(Volume("myservice-data", external=True if dev else False))
 ```
+> [!NOTE]
+> Containup isn’t a replacement for Compose — it’s what you reach for when Compose stops being enough.
+> If your `docker-compose.yml` still works fine, keep using it.
+> But when you start juggling `.env` files, `envsubst`, wrapper scripts, or conditionals across environments — that’s where Containup makes things simpler, not harder.
 
-This isn’t about replacing Compose. It’s about not having to build a custom orchestration layer around Compose just to
-support dynamic use cases.
+### Know what you do before launching
+
+One key pain point with Compose — and container tooling in general — is that you
+often don’t know exactly what’s going to be created until you run it.
+
+In DevOps workflows, this lack of visibility is risky. You want a plan, not just a launch.
+
+That’s why Containup includes a human-readable `--dry-run` mode: it shows exactly what would be 
+created — volumes, networks, containers, ports — **and emits warnings** when something looks off: 
+an image without a tag, a container without a healthcheck, a writable bind mount on a critical path…
 
 ## Usage
 

@@ -24,7 +24,7 @@ class StackRunner:
         self.stack = stack
         self.config = config or containup_cli()
         self.client: docker.DockerClient = docker.from_env()
-        self._auditor = StdoutAuditor()
+        self._auditor = StdoutAuditor(self.stack, self.config)
         self.operator = (
             DryRunOperator(self._auditor)
             if self.config.dry_run
