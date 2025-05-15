@@ -11,6 +11,7 @@ from containup import (
     VolumeMount,
     port,
     BindMount,
+    secret,
 )
 from containup.stack.service_healthcheck import CmdShellHealthcheck, HealthcheckOptions
 
@@ -49,7 +50,7 @@ stack.add(
         environment={
             "POSTGRES_DB": "postgres",
             "POSTGRES_USER": "odoo",
-            "POSTGRES_PASSWORD": db_password,
+            "POSTGRES_PASSWORD": secret("postgres password", db_password),
         },
         volumes=[VolumeMount("pgdata", "/var/lib/postgresql/data")],
         network="backend",

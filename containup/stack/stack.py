@@ -10,6 +10,7 @@ from .service_healthcheck import HealthCheck
 from .service_mounts import ServiceMounts
 from .service_ports import ServicePortMappings
 from .volume import Volume
+from containup.utils.secret_value import SecretValue
 
 # Initialize logger for this lib. Don't force the logger
 logger = logging.getLogger(__name__)
@@ -20,7 +21,7 @@ class _RestartPolicy(TypedDict):
     Name: NotRequired[Literal["always", "on-failure"]]
 
 
-EnvironmentsMapping = Dict[str, str]
+EnvironmentsMapping = Dict[str, Union[str, SecretValue]]
 
 Commands = List[str]
 

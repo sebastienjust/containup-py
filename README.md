@@ -193,8 +193,12 @@ Containup provides a `--dry-run` mode to do exactly that.
 It prints a clean, readable preview of what the stack will create:
 **volumes, networks, containers, ports, mounts, environment variables**, and more — without touching your system.
 
+> [!TIP]
+> The following example can be run immediately if you "git clone" this project (see instructions for checkout below): 
 
 ```text
+$ python3 samples/sample_web_stack.py up --dry-run
+
 🧱 Stack: odoo-stack (dry-run) up 
 
 📦 Volumes
@@ -212,9 +216,9 @@ It prints a clean, readable preview of what the stack will create:
    Network    : backend
    Ports      : 5432/tcp
    Volumes    : /var/lib/postgresql/data → (volume) pgdata (read-write) 
-   Environment: POSTGRES_DB=postgres
-                POSTGRES_USER=odoo
-                POSTGRES_PASSWORD=defaultpass
+   Environment: POSTGRES_DB=postgres 
+                POSTGRES_USER=odoo 
+                POSTGRES_PASSWORD=<Secret: postgres password> 
    Healthcheck: {'pg_isready -U odoo'}
 
 2. redis (image: redis:7)
@@ -227,13 +231,13 @@ It prints a clean, readable preview of what the stack will create:
    Ports      : 8069:8069/tcp
    Volumes    : /var/lib/odoo → (volume) odoo_data (read-write) 
                 /var/logs/odo → (bind) /opt/tmp/logs read-only 
-   Environment: HOST=0.0.0.0
-                PORT=8069
-                USER=odoo
-                PASSWORD=defaultpass
-                PGHOST=postgres
-                PGUSER=odoo
-                PGPASSWORD=defaultpass
+   Environment: HOST=0.0.0.0 
+                PORT=8069 
+                USER=odoo 
+                PASSWORD=defaultpass ❌ PASSWORD looks like a secret but is passed as plaintext — use containup.secret() to redact it safely
+                PGHOST=postgres 
+                PGUSER=odoo 
+                PGPASSWORD=defaultpass ❌ PGPASSWORD looks like a secret but is passed as plaintext — use containup.secret() to redact it safely
    Healthcheck: 🛈 no healthcheck
 
 4. pgadmin (image: dpage/pgadmin4 ❌  image has no explicit tag (defaults to :latest))
@@ -241,8 +245,8 @@ It prints a clean, readable preview of what the stack will create:
    Ports      : 5050:80/tcp
    Volumes    : /var/lib/pgadmin → (volume) pgadmin_data (read-write) 
                 /etc/postgresql → (bind) /etc/postgresql (read-write) ❌  sensitive host path, ⚠️  default to read-write, make it explicit
-   Environment: PGADMIN_DEFAULT_EMAIL=admin@example.com
-                PGADMIN_DEFAULT_PASSWORD=defaultpass
+   Environment: PGADMIN_DEFAULT_EMAIL=admin@example.com 
+                PGADMIN_DEFAULT_PASSWORD=defaultpass ❌ PGADMIN_DEFAULT_PASSWORD looks like a secret but is passed as plaintext — use containup.secret() to redact it safely
    Healthcheck: 🛈 no healthcheck
 
 5. traefik (image: traefik:v2.10)

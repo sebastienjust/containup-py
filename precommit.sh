@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+set -ex
+
 # Script used sometimes, manually to check everything before commit
 
 echo "==> Remove old builds and generated stuff..."

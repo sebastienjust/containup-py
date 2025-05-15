@@ -27,5 +27,7 @@ from containup.stack.service_healthcheck import (
 from containup.containup_cli import containup_cli as containup_cli, Config as Config
 from containup.containup_run import containup_run as containup_run
 
+from containup.utils.secret_value import SecretValue as SecretValue, secret as secret
+
 # Updated by bumpver
 __version__ = "v0.1.5"
