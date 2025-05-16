@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 This project follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 and uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [0.1.6] - 2025-05-16
 
 ### Breaking changes
 
@@ -30,11 +30,11 @@ and uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - Added documentation : How to manage container inter-dependencies
 - Added documentation : How to manage container scaling
 
-## [0.1.5] - 2025-03-13
+## [0.1.5] - 2025-05-13
 
 - Just some more documentation and links to get feedback on the tool.
 
-## [0.1.4] - 2025-03-13
+## [0.1.4] - 2025-05-13
 
 ### Changed
 
