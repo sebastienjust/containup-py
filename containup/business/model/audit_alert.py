@@ -14,6 +14,8 @@ class AuditAlertType(str, Enum):
 class AuditLocations(str, Enum):
     SERVICE = "service"
     ENVIRONMENT = "environment"
+    HEALTHCHECK = "heathcheck"
+    MOUNT = "mount"
 
 
 @dataclass
@@ -26,6 +28,12 @@ class AuditAlertLocation:
 
     def environment(self, key: str):
         return AuditAlertLocation(self.location + [AuditLocations.ENVIRONMENT, key])
+
+    def healthcheck(self):
+        return AuditAlertLocation(self.location + [AuditLocations.HEALTHCHECK])
+
+    def mount(self, mount_id: str):
+        return AuditAlertLocation(self.location + [AuditLocations.MOUNT, mount_id])
 
 
 @dataclass

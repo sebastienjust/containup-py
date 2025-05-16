@@ -1,4 +1,8 @@
 from containup.business.audit.audit_secrets import AuditSecretsInspector
+from containup.business.audit.audit_service_healthcheck import (
+    AuditServiceHealthcheckInspector,
+)
+from containup.business.audit.audit_service_mounts import AuditServiceMountsInspector
 from containup.business.model.audit_alert import AuditInspector
 from containup.business.plugins.plugin_registry import Plugin
 
@@ -10,4 +14,8 @@ class PluginBuiltins(Plugin):
         return "containup_builtins"
 
     def audit_inspectors(self) -> list[AuditInspector]:
-        return [AuditSecretsInspector()]
+        return [
+            AuditSecretsInspector(),
+            AuditServiceHealthcheckInspector(),
+            AuditServiceMountsInspector(),
+        ]

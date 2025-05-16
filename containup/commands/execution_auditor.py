@@ -3,8 +3,6 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from typing import Optional, TextIO
 
-from docker.types import Healthcheck
-
 from containup.business.audit.audit_report import AuditReport
 from containup.business.model.audit_alert import (
     AuditAlertType,
@@ -14,7 +12,6 @@ from containup.business.model.audit_alert import (
 from containup.containup_cli import Config
 from containup.stack.network import Network
 from containup.stack.service_mounts import BindMount, VolumeMount
-from containup.stack.service_mounts import ServiceMount
 from containup.stack.stack import Service, Stack
 from containup.stack.volume import Volume
 
@@ -274,29 +271,37 @@ def _render_readable_summary(
                         if isinstance(vol, BindMount)
                         else vol.source if isinstance(vol, VolumeMount) else ""
                     )
-                    alerts = ", ".join(mount_alert(vol))
+                    read_only = vol.read_only
                     rw = (
                         "(read-write)"
-                        if vol.read_only is None
-                        else "read-only" if vol.read_only else "read-write"
+                        if read_only is None
+                        else "read-only" if read_only else "read-write"
                     )
-                    lines.append(
-                        f"{key} {vol.target} → ({vol.type()}) {source} {rw} {alerts}"
-                    )
+                    lines.append(f"{key} {vol.target} → ({vol.type()}) {source} {rw}")
+                    location = AuditAlertLocation.service(c.name).mount(vol.id)
+                    alerts = to_formatted_alert_list(audit_report.query(location))
+                    for alert in alerts:
+                        lines.append(f"{key_empty_formatted}     {alert}")
             if c.environment:
                 for i, (env_key, env_value) in enumerate(c.environment.items()):
                     key = key_environment_formatted if i == 0 else key_empty_formatted
-                    alert_msg = format_alerts_single_line(
-                        audit_report,
-                        AuditAlertLocation.service(c.name).environment(env_key),
-                    )
-                    lines.append(f"{key} {env_key}={env_value} {alert_msg}")
-            healtcheck = (
-                "🛈 no healthcheck"
-                if c.healthcheck is None
-                else {getattr(c.healthcheck, "command", "")}
+                    location = AuditAlertLocation.service(c.name).environment(env_key)
+                    alerts = to_formatted_alert_list(audit_report.query(location))
+                    lines.append(f"{key} {env_key}={env_value}")
+                    for alert in alerts:
+                        lines.append(f"{key_empty_formatted}     {alert}")
+
+            base_line = getattr(c.healthcheck, "command", "") if c.healthcheck else None
+            healthcheck_lines = [base_line] + to_formatted_alert_list(
+                audit_report.query(AuditAlertLocation.service(c.name).healthcheck())
             )
-            lines.append(f"{key_healthcheck_formatted} {healtcheck}")
+            healthcheck_lines_safe = [
+                line for line in healthcheck_lines if line is not None
+            ]
+
+            for i, healtcheck_line in enumerate(healthcheck_lines_safe):
+                key = key_healthcheck_formatted if i == 0 else key_empty_formatted
+                lines.append(f"{key} {healtcheck_line}")
 
             if c.command:
                 for i, cmd in enumerate(c.command):
@@ -396,25 +401,3 @@ def image_tag_alert(image: str) -> Optional[str]:
         return f"{emoji_map['unstable']}  image tag is vague :{tag}"
 
     return None
-
-
-def mount_alert(mount: ServiceMount) -> list[str]:
-    """Returns alerts on mount"""
-
-    alerts: list[str] = []
-    if isinstance(mount, BindMount):
-        for prefix in ["etc", "var", "home", "root"]:
-            if mount.source.startswith("/" + prefix):
-                alerts.append("❌  sensitive host path")
-        if mount.read_only is None:
-            alerts.append("⚠️  default to read-write, make it explicit")
-
-    return alerts
-
-
-def healthcheck_alerts(healthcheck: Optional[Healthcheck]) -> list[str]:
-    """Returns alerts on healthcheck"""
-    alerts: list[str] = []
-    if healthcheck is None:
-        alerts.append("⚠️  no health check")
-    return alerts

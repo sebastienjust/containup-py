@@ -107,7 +107,7 @@ stack.add(
         },
         volumes=[
             VolumeMount("pgadmin_data", "/var/lib/pgadmin"),
-            BindMount("/etc/postgresql", "/etc/postgresql"),
+            BindMount("/etc/postgresql", "/etc/postgresql", read_only=True),
         ],
         network="frontend",
         ports=[port(container_port=80, host_port=5050)],

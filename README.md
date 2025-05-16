@@ -329,6 +329,8 @@ Containup dry-run emits warnings when it sees patterns known to cause trouble:
 * ❌ image has no tag (defaults to `:latest`)
 * ⚠️ image uses unstable or vague tag (`dev`, `nightly`, etc.)
 * ❌ bind mount over sensitive host path (`/etc`, `/var`, `/root`)
+* ❌ conflicting mount paths
+* ❌ relative mount paths
 * ⚠️ bind mount is read-write by default — make it explicit
 * 🛈 no healthcheck — Docker will consider the service healthy as soon as it starts
 
