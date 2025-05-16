@@ -1,5 +1,3 @@
-from dataclasses import dataclass
-
 from containup.business.audit.audit_alert import (
     AuditAlertType,
     AuditAlert,
@@ -8,9 +6,7 @@ from containup.business.audit.audit_alert import (
 from containup.business.audit.audit_report import AuditResult
 from containup.business.execution_listener import (
     ExecutionListener,
-    ExecutionEvt,
     ExecutionEvtNetwork,
-    ExecutionEvtContainer,
     ExecutionEvtVolume,
     ExecutionEvtVolumeExistsCheck,
     ExecutionEvtVolumeRemoved,
@@ -18,11 +14,12 @@ from containup.business.execution_listener import (
     ExecutionEvtNetworkExistsCheck,
     ExecutionEvtNetworkRemoved,
     ExecutionEvtNetworkCreated,
-    ExecutionEvtContainerRun,
 )
 from containup.containup_cli import Config
+from containup.stack.network import Network
 from containup.stack.service_mounts import BindMount, VolumeMount
 from containup.stack.stack import Service, Stack
+from containup.stack.volume import Volume
 
 
 def report_standard(
@@ -31,9 +28,6 @@ def report_standard(
     config: Config,
     audit_report: AuditResult,
 ) -> str:
-    evts = execution_listener.get_events()
-    evt_groups = _group_evts(evts)
-
     lines: list[str] = []
 
     services_joined = ", ".join(config.services)
@@ -43,45 +37,31 @@ def report_standard(
         f"🧱 Stack: {stack.name} (dry-run) {config.command} {services_annotated}\n"
     )
 
-    max_key_len_volumes = max((len(n.volume_id) for n in evt_groups.volumes), default=0)
-    max_key_len_networks = max(
-        (len(n.network_id) for n in evt_groups.networks), default=0
-    )
+    volumes = [v for _, v in stack.mounts.items()]
+    networks = [v for _, v in stack.networks.items()]
+
+    max_key_len_volumes = max((len(n.name) for n in volumes), default=0)
+    max_key_len_networks = max((len(n.name) for n in networks), default=0)
     max_key_len = max(max_key_len_volumes, max_key_len_networks)
 
-    evt_volumes: list[VolumeEvts] = evt_groups.volumes
-    if evt_volumes:
+    if volumes:
         lines.append("📦 Volumes")
-
-        for env_value in evt_volumes:
-            lines.append(
-                f"  - {env_value.volume_id:<{max_key_len}} : "
-                + " → ".join(volume_evt_summaries(env_value.evts))
-            )
+        for volume in volumes:
+            lines += report_volume(volume, execution_listener, max_key_len)
         lines.append("")
 
-    if evt_groups.networks:
+    if networks:
         lines.append("🔗 Networks")
-        for n in evt_groups.networks:
-            lines.append(
-                f"  - {n.network_id:{max_key_len}} : "
-                + " → ".join(network_evt_summaries(n.evts))
-            )
+        for network in networks:
+            lines += report_network(network, execution_listener, max_key_len)
         lines.append("")
 
-    if evt_groups.containers:
-        lines.append("🚀 Containers\n")
-        container_number: int = 0
-        for container_evt in [
-            container_evt
-            for container_evts in evt_groups.containers
-            for container_evt in container_evts.evts
-            if isinstance(container_evt, ExecutionEvtContainerRun)
-        ]:
-            c: Service = container_evt.container
-            container_number += 1
-            lines += report_container(container_number, c, audit_report)
-            lines.append("")
+    lines.append("🚀 Containers\n")
+    container_number: int = 0
+    for container in stack.services:
+        container_number += 1
+        lines += report_container(container_number, container, audit_report)
+        lines.append("")
 
     return "\n".join(lines)
 
@@ -92,10 +72,35 @@ class VolumeEvts:
         self.evts = evts
 
 
+def report_volume(
+    volume: Volume, evts: ExecutionListener, max_key_len: int
+) -> list[str]:
+    volume_evts: list[ExecutionEvtVolume] = []
+    for evt in evts.get_events():
+        if isinstance(evt, ExecutionEvtVolume) and evt.volume_id == volume.name:
+            volume_evts.append(evt)
+    line = f"  - {volume.name:<{max_key_len}} : " + " → ".join(
+        volume_evt_summaries(volume_evts)
+    )
+    return [line]
+
+
+def report_network(
+    network: Network, evts: ExecutionListener, max_key_len: int
+) -> list[str]:
+    network_evts: list[ExecutionEvtNetwork] = []
+    for evt in evts.get_events():
+        if isinstance(evt, ExecutionEvtNetwork) and evt.network_id == network.name:
+            network_evts.append(evt)
+    line = f"  - {network.name:<{max_key_len}} : " + " → ".join(
+        network_evt_summaries(network_evts)
+    )
+    return [line]
+
+
 def report_container(
     container_number: int, c: Service, audit_report: AuditResult
 ) -> list[str]:
-
     lines: list[str] = []
     key_network = "Network"
     key_ports = "Ports"
@@ -179,58 +184,6 @@ def report_container(
             lines.append(f"{key} {cmd}")
 
     return lines
-
-
-@dataclass
-class NetworkEvts:
-    network_id: str
-    evts: list[ExecutionEvtNetwork]
-
-
-@dataclass
-class ContainerEvts:
-    container_id: str
-    evts: list[ExecutionEvtContainer]
-
-
-@dataclass
-class GroupEvts:
-    volumes: list[VolumeEvts]
-    networks: list[NetworkEvts]
-    containers: list[ContainerEvts]
-
-
-class AuditorError(Exception):
-    pass
-
-
-def _group_evts(evts: list[ExecutionEvt]) -> GroupEvts:
-    evts_volume: dict[str, list[ExecutionEvtVolume]] = {}
-    evts_network: dict[str, list[ExecutionEvtNetwork]] = {}
-    evts_container: dict[str, list[ExecutionEvtContainer]] = {}
-    for evt in evts:
-        if isinstance(evt, ExecutionEvtVolume):
-            key = evt.volume_id
-            evts_volume.setdefault(key, []).append(evt)
-        elif isinstance(evt, ExecutionEvtNetwork):
-            key = evt.network_id
-            evts_network.setdefault(key, []).append(evt)
-        elif isinstance(evt, ExecutionEvtContainer):
-            key = evt.container_id
-            evts_container.setdefault(key, []).append(evt)
-        else:
-            raise AuditorError(f"Unhandled event type {evt}")
-    volume_evts: list[VolumeEvts] = [
-        VolumeEvts(volume_id=k, evts=v) for k, v in evts_volume.items()
-    ]
-    network_evts: list[NetworkEvts] = [
-        NetworkEvts(network_id=k, evts=v) for k, v in evts_network.items()
-    ]
-    container_evts: list[ContainerEvts] = [
-        ContainerEvts(container_id=k, evts=v) for k, v in evts_container.items()
-    ]
-
-    return GroupEvts(volume_evts, network_evts, container_evts)
 
 
 def format_alerts_single_line(
