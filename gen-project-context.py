@@ -43,7 +43,7 @@ def main():
         "type_checking": pyright.get("typeCheckingMode"),
         "tools": list(pyproject.get("tool", {}).keys()),
         "entry": "containup",
-        "notes": "Projet en développement actif. API instable. Contributions externes en pause.",
+        "notes": "Projet en développement actif. API instable.",
     }
 
     with open(target / ".project-context", "w") as f:

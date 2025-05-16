@@ -1,5 +1,6 @@
+from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
-from typing import List, Union
+from typing import List
 
 
 @dataclass
@@ -52,18 +53,33 @@ class HealthcheckOptions:
     """
 
 
+class HealthCheck(ABC):
+    type: str = "<unknown>"
+
+    @abstractmethod
+    def summary(self) -> str:
+        pass
+
+
 @dataclass
-class InheritHealthcheck:
+class InheritHealthcheck(HealthCheck):
     options: HealthcheckOptions = field(default_factory=lambda: HealthcheckOptions())
+    type = "inherit"
+
+    def summary(self) -> str:
+        return "Inherited"
 
 
 @dataclass
-class NoneHealthcheck:
-    pass
+class NoneHealthcheck(HealthCheck):
+    type = "none"
+
+    def summary(self) -> str:
+        return "None"
 
 
 @dataclass
-class CmdHealthcheck:
+class CmdHealthcheck(HealthCheck):
     command: List[str]
     """
     Executes directly the command, each part part of the command being separated in the list. 
@@ -73,15 +89,18 @@ class CmdHealthcheck:
     Example:  CmdHealthcheck(["program", "-l", "INFO"])
     """
     options: HealthcheckOptions = field(default_factory=lambda: HealthcheckOptions())
+    type = "cmd"
+
+    def summary(self) -> str:
+        return "(exec) " + " ".join(self.command)[:50]
 
 
 @dataclass
-class CmdShellHealthcheck:
+class CmdShellHealthcheck(HealthCheck):
     command: str
     """Executes the specified command in the system's default shell"""
     options: HealthcheckOptions = field(default_factory=lambda: HealthcheckOptions())
+    type = "cmd_shell"
 
-
-HealthCheck = Union[
-    CmdShellHealthcheck, CmdHealthcheck, NoneHealthcheck, InheritHealthcheck
-]
+    def summary(self) -> str:
+        return "(shell) " + self.command[:50]

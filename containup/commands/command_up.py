@@ -26,7 +26,7 @@ class CommandUp:
         try:
             self._ensure_volumes()
             self._ensure_networks()
-            services = self.stack.filter_services(filter_services)
+            services = self.stack.get_services_sorted(filter_services)
             for service in services:
                 container_name = service.container_name or service.name
 
