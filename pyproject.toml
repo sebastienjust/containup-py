@@ -87,7 +87,7 @@ push = false
 "containup/__init__.py" = [
     '__version__ = "{version}"'
 ]
-"containup/cli.py" = [
+"containup/containup_cli.py" = [
     '_version = "{version}"'
 ]
 "docs/source/conf.py" = [
