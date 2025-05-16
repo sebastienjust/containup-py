@@ -342,7 +342,7 @@ $ python3 samples/sample_web_stack.py up --dry-run
 ```
 
 > [!TIP]
-> Un further releases, secrets will be redacted in reports 
+> Secrets, when declared with `secret()`, are reacted in reports, logs and exceptions. 
 
 #### What is this useful for?
 
