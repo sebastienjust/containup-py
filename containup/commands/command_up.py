@@ -1,6 +1,7 @@
 import logging
 from typing import List, Optional
 
+from containup import NoneHealthcheck
 from containup.commands.container_operator import (
     ContainerOperator,
     ContainerOperatorException,
@@ -38,6 +39,13 @@ class CommandUp:
 
                 logger.info(f"Run container {container_name} : start")
                 self.operator.container_run(service)
+                if service.healthcheck and not isinstance(
+                    service.healthcheck, NoneHealthcheck
+                ):
+                    logger.info(
+                        f"Run container {container_name} : wait for healthcheck"
+                    )
+                    self.operator.container_wait_healthy(service)
                 logger.info(f"Run container {container_name} : start done")
 
         except ContainerOperatorException as e:

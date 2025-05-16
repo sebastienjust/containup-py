@@ -118,3 +118,7 @@ class Service:
     def mounts_all(self) -> ServiceMounts:
         """Get all volumes and mounts in the same format"""
         return self.volumes + self.mounts
+
+    def container_name_safe(self) -> str:
+        """Get container name or service name"""
+        return self.container_name or self.name
