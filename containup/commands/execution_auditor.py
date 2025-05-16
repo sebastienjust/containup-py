@@ -286,11 +286,10 @@ def _render_readable_summary(
             if c.environment:
                 for i, (env_key, env_value) in enumerate(c.environment.items()):
                     key = key_environment_formatted if i == 0 else key_empty_formatted
-                    alert_list = audit_report.query(
-                        AuditAlertLocation(["service", c.name, "environment", env_key])
+                    alert_msg = format_alerts_single_line(
+                        audit_report,
+                        AuditAlertLocation(["service", c.name, "environment", env_key]),
                     )
-                    alert_fmt_list = format_alerts(alert_list)
-                    alert_msg = ", ".join(alert_fmt_list)
                     lines.append(f"{key} {env_key}={env_value} {alert_msg}")
             healtcheck = (
                 "🛈 no healthcheck"
@@ -308,11 +307,20 @@ def _render_readable_summary(
     return "\n".join(lines)
 
 
-def format_alerts(alerts: list[AuditAlert]) -> list[str]:
-    return [format_alert(alert) for alert in alerts]
+def format_alerts_single_line(
+    audit_report: AuditReport, location: AuditAlertLocation
+) -> str:
+    alert_list = audit_report.query(location)
+    alert_fmt_list = to_formatted_alert_list(alert_list)
+    alert_msg = ", ".join(alert_fmt_list)
+    return alert_msg
 
 
-def format_alert(alert: AuditAlert) -> str:
+def to_formatted_alert_list(alerts: list[AuditAlert]) -> list[str]:
+    return [to_formatted_alert(alert) for alert in alerts]
+
+
+def to_formatted_alert(alert: AuditAlert) -> str:
     emoji_map = {
         AuditAlertType.CRITICAL: "❌",
         AuditAlertType.WARN: "⚠️",
