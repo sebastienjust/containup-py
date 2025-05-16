@@ -80,91 +80,7 @@ def report_standard(
         ]:
             c: Service = container_evt.container
             container_number += 1
-
-            key_network = "Network"
-            key_ports = "Ports"
-            key_mounts = "Volumes"
-            key_environment = "Environment"
-            key_healthcheck = "Healthcheck"
-            key_commands = "Commands"
-            key_empty = ""
-            key_len = max(
-                len(key_network),
-                len(key_mounts),
-                len(key_environment),
-                len(key_healthcheck),
-                len(key_commands),
-            )
-            key_network_formatted = f"   {key_network:<{key_len}}:"
-            key_ports_formatted = f"   {key_ports:<{key_len}}:"
-            key_mounts_formatted = f"   {key_mounts:<{key_len}}:"
-            key_environment_formatted = f"   {key_environment:<{key_len}}:"
-            key_healthcheck_formatted = f"   {key_healthcheck:<{key_len}}:"
-            key_commands_formatted = f"   {key_commands:<{key_len}}:"
-            key_empty_formatted = f"   {key_empty:<{key_len}} "
-
-            image_alerts_fmt = format_alerts_single_line(
-                audit_report, AuditAlertLocation.service(c.name).image()
-            )
-            lines.append(
-                f"{container_number}. {c.name} ({image_str(c.image, image_alerts_fmt)})"
-            )
-            if c.network:
-                lines.append(f"{key_network_formatted} {c.network}")
-            if c.ports:
-                port_lines: list[str] = []
-                for p in c.ports:
-                    if p.host_port:
-                        port_lines.append(
-                            f"{p.host_port}:{p.container_port}/{p.protocol}"
-                        )
-                    else:
-                        port_lines.append(f"{p.container_port}/{p.protocol}")
-                lines.append(f"{key_ports_formatted} {', '.join(port_lines)}")
-            if c.volumes:
-                for i, vol in enumerate(c.volumes):
-                    key = key_mounts_formatted if i == 0 else key_empty_formatted
-                    source = (
-                        vol.source
-                        if isinstance(vol, BindMount)
-                        else vol.source if isinstance(vol, VolumeMount) else ""
-                    )
-                    read_only = vol.read_only
-                    rw = (
-                        "(read-write)"
-                        if read_only is None
-                        else "read-only" if read_only else "read-write"
-                    )
-                    lines.append(f"{key} {vol.target} → ({vol.type()}) {source} {rw}")
-                    location = AuditAlertLocation.service(c.name).mount(vol.id)
-                    alerts = to_formatted_alert_list(audit_report.query(location))
-                    for alert in alerts:
-                        lines.append(f"{key_empty_formatted}     {alert}")
-            if c.environment:
-                for i, (env_key, env_value) in enumerate(c.environment.items()):
-                    key = key_environment_formatted if i == 0 else key_empty_formatted
-                    location = AuditAlertLocation.service(c.name).environment(env_key)
-                    alerts = to_formatted_alert_list(audit_report.query(location))
-                    lines.append(f"{key} {env_key}={env_value}")
-                    for alert in alerts:
-                        lines.append(f"{key_empty_formatted}     {alert}")
-
-            base_line = getattr(c.healthcheck, "command", "") if c.healthcheck else None
-            healthcheck_lines = [base_line] + to_formatted_alert_list(
-                audit_report.query(AuditAlertLocation.service(c.name).healthcheck())
-            )
-            healthcheck_lines_safe = [
-                line for line in healthcheck_lines if line is not None
-            ]
-
-            for i, healtcheck_line in enumerate(healthcheck_lines_safe):
-                key = key_healthcheck_formatted if i == 0 else key_empty_formatted
-                lines.append(f"{key} {healtcheck_line}")
-
-            if c.command:
-                for i, cmd in enumerate(c.command):
-                    key = key_commands_formatted if i == 0 else key_empty_formatted
-                    lines.append(f"{key} {cmd}")
+            lines += report_container(container_number, c, audit_report)
             lines.append("")
 
     return "\n".join(lines)
@@ -174,6 +90,95 @@ class VolumeEvts:
     def __init__(self, volume_id: str, evts: list[ExecutionEvtVolume]):
         self.volume_id = volume_id
         self.evts = evts
+
+
+def report_container(
+    container_number: int, c: Service, audit_report: AuditResult
+) -> list[str]:
+
+    lines: list[str] = []
+    key_network = "Network"
+    key_ports = "Ports"
+    key_mounts = "Volumes"
+    key_environment = "Environment"
+    key_healthcheck = "Healthcheck"
+    key_commands = "Commands"
+    key_empty = ""
+    key_len = max(
+        len(key_network),
+        len(key_mounts),
+        len(key_environment),
+        len(key_healthcheck),
+        len(key_commands),
+    )
+    key_network_formatted = f"   {key_network:<{key_len}}:"
+    key_ports_formatted = f"   {key_ports:<{key_len}}:"
+    key_mounts_formatted = f"   {key_mounts:<{key_len}}:"
+    key_environment_formatted = f"   {key_environment:<{key_len}}:"
+    key_healthcheck_formatted = f"   {key_healthcheck:<{key_len}}:"
+    key_commands_formatted = f"   {key_commands:<{key_len}}:"
+    key_empty_formatted = f"   {key_empty:<{key_len}} "
+
+    image_alerts_fmt = format_alerts_single_line(
+        audit_report, AuditAlertLocation.service(c.name).image()
+    )
+    lines.append(
+        f"{container_number}. {c.name} ({image_str(c.image, image_alerts_fmt)})"
+    )
+    if c.network:
+        lines.append(f"{key_network_formatted} {c.network}")
+    if c.ports:
+        port_lines: list[str] = []
+        for p in c.ports:
+            if p.host_port:
+                port_lines.append(f"{p.host_port}:{p.container_port}/{p.protocol}")
+            else:
+                port_lines.append(f"{p.container_port}/{p.protocol}")
+        lines.append(f"{key_ports_formatted} {', '.join(port_lines)}")
+    if c.volumes:
+        for i, vol in enumerate(c.volumes):
+            key = key_mounts_formatted if i == 0 else key_empty_formatted
+            source = (
+                vol.source
+                if isinstance(vol, BindMount)
+                else vol.source if isinstance(vol, VolumeMount) else ""
+            )
+            read_only = vol.read_only
+            rw = (
+                "(read-write)"
+                if read_only is None
+                else "read-only" if read_only else "read-write"
+            )
+            lines.append(f"{key} {vol.target} → ({vol.type()}) {source} {rw}")
+            location = AuditAlertLocation.service(c.name).mount(vol.id)
+            alerts = to_formatted_alert_list(audit_report.query(location))
+            for alert in alerts:
+                lines.append(f"{key_empty_formatted}     {alert}")
+    if c.environment:
+        for i, (env_key, env_value) in enumerate(c.environment.items()):
+            key = key_environment_formatted if i == 0 else key_empty_formatted
+            location = AuditAlertLocation.service(c.name).environment(env_key)
+            alerts = to_formatted_alert_list(audit_report.query(location))
+            lines.append(f"{key} {env_key}={env_value}")
+            for alert in alerts:
+                lines.append(f"{key_empty_formatted}     {alert}")
+
+    base_line = getattr(c.healthcheck, "command", "") if c.healthcheck else None
+    healthcheck_lines = [base_line] + to_formatted_alert_list(
+        audit_report.query(AuditAlertLocation.service(c.name).healthcheck())
+    )
+    healthcheck_lines_safe = [line for line in healthcheck_lines if line is not None]
+
+    for i, healtcheck_line in enumerate(healthcheck_lines_safe):
+        key = key_healthcheck_formatted if i == 0 else key_empty_formatted
+        lines.append(f"{key} {healtcheck_line}")
+
+    if c.command:
+        for i, cmd in enumerate(c.command):
+            key = key_commands_formatted if i == 0 else key_empty_formatted
+            lines.append(f"{key} {cmd}")
+
+    return lines
 
 
 @dataclass
