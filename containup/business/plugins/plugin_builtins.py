@@ -3,7 +3,7 @@ from containup.business.audit.audit_service_healthcheck import (
     AuditServiceHealthcheckInspector,
 )
 from containup.business.audit.audit_service_mounts import AuditServiceMountsInspector
-from containup.business.model.audit_alert import AuditInspector
+from containup.business.audit.audit_alert import AuditInspector
 from containup.business.plugins.plugin_registry import Plugin
 
 

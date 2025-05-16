@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 
-from containup.business.model.audit_alert import AuditInspector
+from containup.business.audit.audit_alert import AuditInspector
 
 
 class Plugin(ABC):

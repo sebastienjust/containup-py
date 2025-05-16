@@ -1,5 +1,5 @@
 from containup.business.audit.audit_report import AuditReport
-from containup.business.model.audit_alert import AuditAlert
+from containup.business.audit.audit_alert import AuditAlert
 from containup.business.plugins.plugin_registry import PluginRegistry
 from containup.stack.stack import Stack
 

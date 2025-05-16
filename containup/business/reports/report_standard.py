@@ -16,7 +16,7 @@ from containup.business.execution_listener import (
     ExecutionEvtNetworkCreated,
     ExecutionEvtContainerRun,
 )
-from containup.business.model.audit_alert import (
+from containup.business.audit.audit_alert import (
     AuditAlertType,
     AuditAlert,
     AuditAlertLocation,

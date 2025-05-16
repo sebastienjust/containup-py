@@ -1,4 +1,4 @@
-from containup.business.model.audit_alert import AuditAlert, AuditAlertLocation
+from containup.business.audit.audit_alert import AuditAlert, AuditAlertLocation
 
 
 class AuditReport:

@@ -1,6 +1,6 @@
 from pathlib import PurePosixPath
 
-from containup.business.model.audit_alert import (
+from containup.business.audit.audit_alert import (
     AuditInspector,
     AuditAlert,
     AuditAlertType,
