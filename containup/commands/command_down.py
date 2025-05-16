@@ -19,7 +19,7 @@ class CommandDown:
         self.operator = operator
 
     def down(self, filter_services: Optional[list[str]] = None) -> None:
-        services = self.stack.filter_services(filter_services)
+        services = self.stack.get_services_sorted(filter_services)[::-1]
         for service in services:
             container_name = service.container_name or service.name
             try:

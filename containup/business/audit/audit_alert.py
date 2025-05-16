@@ -17,6 +17,7 @@ class AuditLocations(str, Enum):
     HEALTHCHECK = "heathcheck"
     MOUNT = "mount"
     IMAGE = "image"
+    DEPENDS_ON = "depends_on"
 
 
 @dataclass
@@ -38,6 +39,9 @@ class AuditAlertLocation:
 
     def image(self):
         return AuditAlertLocation(self.location + [AuditLocations.IMAGE])
+
+    def depends_on(self, id: str):
+        return AuditAlertLocation(self.location + [AuditLocations.DEPENDS_ON, id])
 
 
 @dataclass

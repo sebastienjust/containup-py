@@ -107,6 +107,7 @@ def report_container(
     key_mounts = "Volumes"
     key_environment = "Environment"
     key_healthcheck = "Healthcheck"
+    key_depends_on = "Depends on"
     key_commands = "Commands"
     key_empty = ""
     key_len = max(
@@ -114,6 +115,7 @@ def report_container(
         len(key_mounts),
         len(key_environment),
         len(key_healthcheck),
+        len(key_depends_on),
         len(key_commands),
     )
     key_network_formatted = f"   {key_network:<{key_len}}:"
@@ -122,6 +124,7 @@ def report_container(
     key_environment_formatted = f"   {key_environment:<{key_len}}:"
     key_healthcheck_formatted = f"   {key_healthcheck:<{key_len}}:"
     key_commands_formatted = f"   {key_commands:<{key_len}}:"
+    key_depends_on_formatted = f"   {key_depends_on:<{key_len}}:"
     key_empty_formatted = f"   {key_empty:<{key_len}} "
 
     image_alerts_fmt = format_alerts_single_line(
@@ -168,7 +171,21 @@ def report_container(
             for alert in alerts:
                 lines.append(f"{key_empty_formatted}     {alert}")
 
-    base_line = getattr(c.healthcheck, "command", "") if c.healthcheck else None
+    for i, dependency_name in enumerate(c.depends_on):
+        key = key_depends_on_formatted if i == 0 else key_empty_formatted
+        lines.append(f"{key} {dependency_name}")
+        location = AuditAlertLocation.service(c.name).depends_on(dependency_name)
+        alerts = to_formatted_alert_list(audit_report.query(location))
+        for alert in alerts:
+            lines.append(f"{key_empty_formatted}     {alert}")
+
+    if c.command:
+        cmd = " ".join(c.command)
+        lines.append(f"{key_commands_formatted} {cmd}")
+
+    healthcheck = c.healthcheck
+    name = None if healthcheck is None else healthcheck.summary()
+    base_line = name
     healthcheck_lines = [base_line] + to_formatted_alert_list(
         audit_report.query(AuditAlertLocation.service(c.name).healthcheck())
     )
@@ -177,11 +194,6 @@ def report_container(
     for i, healtcheck_line in enumerate(healthcheck_lines_safe):
         key = key_healthcheck_formatted if i == 0 else key_empty_formatted
         lines.append(f"{key} {healtcheck_line}")
-
-    if c.command:
-        for i, cmd in enumerate(c.command):
-            key = key_commands_formatted if i == 0 else key_empty_formatted
-            lines.append(f"{key} {cmd}")
 
     return lines
 
@@ -205,7 +217,7 @@ def to_formatted_alert(alert: AuditAlert) -> str:
         AuditAlertType.WARN: "⚠️",
         AuditAlertType.INFO: "🛈",
     }
-    return (emoji_map[alert.severity] or "") + " " + alert.message
+    return (emoji_map[alert.severity] or "") + "  " + alert.message
 
 
 def volume_evt_summaries(evts: list[ExecutionEvtVolume]) -> list[str]:
