@@ -2,6 +2,13 @@ from containup.business.model.audit_alert import AuditAlert, AuditAlertLocation
 
 
 class AuditReport:
+    """
+    Contains the result of stack auditing.
+
+    Implemented as a wrapper around a list of :class:`AuditAlert` with helper methods to
+    filter and find relevant alerts.
+    """
+
     def __init__(self, alerts: list[AuditAlert]):
         self._alerts = alerts
 
