@@ -1,7 +1,7 @@
 from containup.business.audit.audit_alert import AuditAlert, AuditAlertLocation
 
 
-class AuditReport:
+class AuditResult:
     """
     Contains the result of stack auditing.
 

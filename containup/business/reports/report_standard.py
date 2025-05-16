@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from typing import Optional
 
-from containup.business.audit.audit_report import AuditReport
+from containup.business.audit.audit_report import AuditResult
 from containup.business.execution_listener import (
     ExecutionListener,
     ExecutionEvt,
@@ -30,7 +30,7 @@ def report_standard(
     execution_listener: ExecutionListener,
     stack: Stack,
     config: Config,
-    audit_report: AuditReport,
+    audit_report: AuditResult,
 ) -> str:
     evts = execution_listener.get_events()
     evt_groups = _group_evts(evts)
@@ -225,7 +225,7 @@ def _group_evts(evts: list[ExecutionEvt]) -> GroupEvts:
 
 
 def format_alerts_single_line(
-    audit_report: AuditReport, location: AuditAlertLocation
+    audit_report: AuditResult, location: AuditAlertLocation
 ) -> str:
     alert_list = audit_report.query(location)
     alert_fmt_list = to_formatted_alert_list(alert_list)
