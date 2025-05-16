@@ -16,7 +16,7 @@ class AuditLocations(str, Enum):
     ENVIRONMENT = "environment"
     HEALTHCHECK = "heathcheck"
     MOUNT = "mount"
-    IMAGE = ("image",)
+    IMAGE = "image"
     DEPENDS_ON = "depends_on"
 
 
