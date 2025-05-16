@@ -1,77 +1,122 @@
 # containup
 
-Define and run Docker Compose-like stacks entirely in Python. Include your environment logic. No YAML.
+**Write Compose-like stacks in Python — when static files fall short.**
 
-> [!IMPORTANT]  
-> ⚠️ This project is under active development — the API may change frequently.
+Same Docker, same containers, same behaviour — just no more hacks around static YAML. Use real code instead.
+
+> For developers and DevOps: when Compose YAML hits its limits, but Kubernetes is overkill.
+
+Containup isn’t a replacement for Compose. It’s what you reach for when Compose isn’t enough anymore.  
+- If your `docker-compose.yml` still does the job, stick with it. 
+- But if you’ve added a `Makefile`, `envsubst`, or shell wrappers — maybe it’s no longer “simple”.
+  That’s where Containup comes in: one file, your logic, no glue, no guessing.
+
 
 [![PyPI version](https://img.shields.io/pypi/v/containup)](https://pypi.org/project/containup/)
 [![Downloads/month](https://static.pepy.tech/badge/containup/month)](https://pepy.tech/project/containup)
 [![License: GPL-3.0-or-later](https://img.shields.io/badge/License-GPL%20v3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0.html)
 [![CI](https://github.com/sebastienjust/containup-py/actions/workflows/python-publish.yml/badge.svg)](https://github.com/sebastienjust/containup-py/actions/workflows/python-publish.yml)
 
-## Interested in containup?
 
-- ⭐️ [Star the project](https://github.com/sebastienjust/containup-py) to follow updates.
-- 👍 [React to this issue](https://github.com/sebastienjust/containup-py/issues/14) to signal interest.
-- 💬 Feedback is very welcome! Feel free to open issues or
-  react [here](https://github.com/sebastienjust/containup-py/issues/14) if you're interested.
-
-This helps gauge whether the project is worth pushing further.
+> [!IMPORTANT]  
+> ⚠️ This project is under active development — the API may change frequently.
 
 ## Summary
 
-😵‍💫 **Before**
+❌ With Compose YAML
 
-* `docker-compose.yml` + `.env` + `bash` + `make` + `envsubst` + YAML templating
-* Can't branch, can't loop, can't read a secret, can't debug
-* One file per env, or one giant template nobody wants to touch
-* Fragile chains of tools just to "start containers"
-* You pray it works, you don't know what will run 
-* "dev", "staging", "prod" — and 5 hacks per environment 🥵
+- You need `.env`, `envsubst`, `shell`, `Makefiles`...
+- Can’t branch, can’t loop, can’t fetch a secret
+- Logic spread across files and scripts
+- No preview of what will run
 
-> Describing dynamic systems in static files that can’t even branch. What could go wrong? 🙃 
+✅ With Containup
 
-😌 **After**
+- One Python script — _your_ script, readable, testable, versionable
+- Real logic — `if`, `for`, variables, secrets, external calls, reusability
+- Safe preview — `--dry-run` with warnings and human reporting
+- No glue, no guessing
+
+🛠 Write it
 
 ```python
-dbpass = vault.get_password("db") if env == "prod" else gopass.get_password("dev_db")
-stack.add(Service(name="db", image="postgres", environment={"PASS": secret(dbpass)}))
+from containup import Stack, Service, containup_run
+stack = Stack("demo").add(Service(name="web", image="nginx:alpine"))
+containup_run(stack)
 ```
 
-```bash
-./stack.py up --dry-run   # ✅ dry-run to inspect → flaky images, secret access, env logic
-./stack.py up             # 🚀 launch your stack
+🚀 Run it
+
+```bash 
+./your-stack.py up --dry-run   # ✅ dry-run to inspect → flaky images, secret access, env logic
+./your-stack.py up             # 🚀 launch your stack
 ```
 
-- 🧠 One Python script
-- 🔁 Conditionals, loops, logic
-- 🔐 Secrets, context-aware behavior
-- 🧪 Testable, readable, controlled
+> 🧠 Heads up  
+> Containup is not a CLI. You don’t run containup.  
+> You write and run your own Python script — `stack.py`. That’s your new Compose file.
 
-**→ From YAML + hacks to real code you can trust.**
-**No glue, no guessing, no mess.**
+## Try it now 
+
+```
+curl -sSL https://raw.githubusercontent.com/sebastienjust/containup/main/install-containup.sh | bash
+```
+
+🔥 Ready in 10s — launches an example of a full Odoo stack with PostgreSQL, Redis, Traefik, and pgAdmin.
+
+Requires Python >= 3.9 + Docker installed and running on your machine.
+
+Example source: [sample_web_stack.py](https://github.com/sebastienjust/containup-py/blob/main/samples/sample_web_stack.py)
+
+This stack includes:
+- Odoo 16, PostgreSQL, Redis, pgAdmin, Traefik
+- Real environment variables and mounts
+- Read-only paths and dry-run warnings
+
+What you will see (condensed):
+
+```
+📦 Volumes: pgdata 🟢 created
+🚀 Containers: postgres, redis, odoo, pgadmin, traefik
+❌ Warning: bind mount on /etc/postgresql is read-write
+```
+
+--- 
+
+## Interested in containup?
+
+Want more?
+
+- ⭐️ [Star the repo](https://github.com/sebastienjust/containup-py) to follow updates, 
+- 💬 [Give feedback](https://github.com/sebastienjust/containup-py/issues/14) or suggest features.
 
 ---
 
 ## Motivations
 
-Docker Compose makes things simple: define services, volumes, networks in a YAML file, then run them.
-But the moment you try to do anything dynamic — use secrets, switch images based on environments,
-mount things conditionally — the model breaks.
+Docker Compose is great for simple, static setups: define services, volumes, networks — and run.
 
-You start adding .env files. Then you add envsubst or templating. Then you write shell scripts
-to export variables, inject values, conditionally generate docker-compose.yml.
-Then maybe you start using Makefiles or wrapper scripts. At some point, you’re not really “just
-composing containers” anymore — you’re maintaining a brittle orchestration layer around Compose,
-just to inject the right values into a rigid format. What was supposed to be a simple declarative
-file becomes a small system of indirection and tooling.
+But the moment you need logic — secrets, conditional mounts, environment-based configs — the model 
+starts to break.
+
+So you add `.env` files, then `sed`, `envsubst`, templating, wrapper scripts. A `Makefile`, maybe. 
+
+At some point, you’re not describing a stack anymore — you’re managing the machinery around it.
+
+What was supposed to be a simple declarative file becomes a small system of indirection and tooling.
+
+> Describing dynamic systems in static files that can’t even branch. What could go wrong? 🙃
 
 IMHO, the paradox is this: Docker Compose is a static format trying to describe dynamic behavior.
 But real-world deployments are dynamic: logic, context, secrets, runtime conditions.
 So we build layers on top of YAML to simulate what a real programming language would do natively.
 
-That's what containup-py solves (in my use-cases anyway), by taking the opposite approach.
+> At some point, I was writing more shell than YAML.
+> So I dropped the templates and wrote real code instead.
+> It turned out simpler — and much easier to reason about.
+> And since I wanted to reuse it, I turned it into a library: Containup.
+
+That's what Containup solves (in my use-cases anyway), by taking the opposite approach.
 It exposes a Python API designed to be declarative — so declarative, in fact, that your Python code
 can look almost like Compose YAML:
 
@@ -85,10 +130,10 @@ Stack("mystack").add(Service(
 ))
 ```
 
-You write your stack in Python — a language you're maybe already using,
-already good at, already documented. And if you don't know Python, it doesn't
-matter because the syntax you need for basic things is, in fact, no more
-complicated than YAML.
+You write your stack file in Python — a language you're maybe already using,
+already good at, already documented. And **if you don't know Python, it doesn't
+matter** because the syntax you need for basic things is, in fact, no more
+complicated than YAML (and for sure `sed` or `awk` or anything like this).
 
 You express logic directly. No interpolation, no templating, no escaping, no hacks.
 
@@ -111,12 +156,13 @@ stack.add(Service(
 ))
 stack.add(Volume("myservice-data", external=True if dev else False))
 ```
-> [!NOTE]
-> Containup isn’t a replacement for Compose — it’s what you reach for when Compose stops being enough.
-> If your `docker-compose.yml` still works fine, keep using it.
-> But when you start juggling `.env` files, `envsubst`, wrapper scripts, or conditionals across environments — that’s where Containup makes things simpler, not harder.
 
 ### Know what you do before launching
+
+> But I was still hesitant before running my stacks…
+> What happens when someone else runs it in staging or production — when environments that “should be the same” aren’t, really?
+> Can I simulate that locally? Can I see what will happen, before it actually does?
+> That’s why I added a dry-run mode.
 
 One key pain point with Compose — and container tooling in general — is that you
 often don’t know exactly what’s going to be created until you run it.
