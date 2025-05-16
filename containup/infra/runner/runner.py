@@ -1,13 +1,16 @@
-import docker
 from typing import Optional
+
+import docker
+
 from containup import containup_cli, Config
+from containup.business.audit.audit_registry import AuditRegistry
 from containup.commands.command_down import CommandDown
 from containup.commands.command_up import CommandUp
 from containup.commands.execution_auditor import StdoutAuditor
 from containup.infra.docker.docker_operator import DockerOperator
+from containup.infra.dryrun.dryrun_operator import DryRunOperator
 from containup.infra.user_interactions_cli import UserInteractionsCLI
 from containup.stack.stack import Stack
-from containup.infra.dryrun.dryrun_operator import DryRunOperator
 
 
 class StackRunner:
@@ -34,6 +37,8 @@ class StackRunner:
 
     # Handle command line parsing and launches the commands on the stack
     def run(self):
+
+        alerts = AuditRegistry().inspect(self.stack)
         if self.config.command == "up":
             CommandUp(self.stack, self.operator, self.user_interactions).up(
                 self.config.services
@@ -43,4 +48,4 @@ class StackRunner:
         else:
             raise RuntimeError(f"Unrcognized command {self.config.command}")
         if self.config.dry_run:
-            self._auditor.flush()
+            self._auditor.flush(alerts)

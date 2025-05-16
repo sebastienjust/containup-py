@@ -1,11 +1,16 @@
 import sys
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
-from typing import Optional, TextIO, Union
+from typing import Optional, TextIO
 
 from docker.types import Healthcheck
 
-from containup.utils.secret_value import SecretValue
+from containup.business.audit.audit_report import AuditReport
+from containup.business.model.audit_alert import (
+    AuditAlertType,
+    AuditAlert,
+    AuditAlertLocation,
+)
 from containup.containup_cli import Config
 from containup.stack.network import Network
 from containup.stack.service_mounts import BindMount, VolumeMount
@@ -91,7 +96,7 @@ class ExecutionAuditor:
         pass
 
     @abstractmethod
-    def flush(self) -> None:
+    def flush(self, audit_report: AuditReport) -> None:
         pass
 
 
@@ -105,9 +110,11 @@ class StdoutAuditor(ExecutionAuditor):
     def record(self, message: ExecutionEvt) -> None:
         self._messages.append(message)
 
-    def flush(self) -> None:
+    def flush(self, audit_report: AuditReport) -> None:
         print(
-            _render_readable_summary(self._messages, self._stack, self._config),
+            _render_readable_summary(
+                self._messages, self._stack, self._config, audit_report
+            ),
             file=self._stream,
         )
         # for msg in self._messages:
@@ -173,7 +180,7 @@ def _group_evts(evts: list[ExecutionEvt]) -> GroupEvts:
 
 
 def _render_readable_summary(
-    evts: list[ExecutionEvt], stack: Stack, config: Config
+    evts: list[ExecutionEvt], stack: Stack, config: Config, audit_report: AuditReport
 ) -> str:
     evt_groups = _group_evts(evts)
 
@@ -196,10 +203,10 @@ def _render_readable_summary(
     if evt_volumes:
         lines.append("📦 Volumes")
 
-        for v in evt_volumes:
+        for env_value in evt_volumes:
             lines.append(
-                f"  - {v.volume_id:<{max_key_len}} : "
-                + " → ".join(volume_evt_summaries(v.evts))
+                f"  - {env_value.volume_id:<{max_key_len}} : "
+                + " → ".join(volume_evt_summaries(env_value.evts))
             )
         lines.append("")
 
@@ -277,10 +284,14 @@ def _render_readable_summary(
                         f"{key} {vol.target} → ({vol.type()}) {source} {rw} {alerts}"
                     )
             if c.environment:
-                for i, (k, v) in enumerate(c.environment.items()):
+                for i, (env_key, env_value) in enumerate(c.environment.items()):
                     key = key_environment_formatted if i == 0 else key_empty_formatted
-                    alerts = ", ".join(secrets_alerts(k, v))
-                    lines.append(f"{key} {k}={v} {alerts}")
+                    alert_list = audit_report.query(
+                        AuditAlertLocation(["service", c.name, "environment", env_key])
+                    )
+                    alert_fmt_list = format_alerts(alert_list)
+                    alert_msg = ", ".join(alert_fmt_list)
+                    lines.append(f"{key} {env_key}={env_value} {alert_msg}")
             healtcheck = (
                 "🛈 no healthcheck"
                 if c.healthcheck is None
@@ -295,6 +306,19 @@ def _render_readable_summary(
             lines.append("")
 
     return "\n".join(lines)
+
+
+def format_alerts(alerts: list[AuditAlert]) -> list[str]:
+    return [format_alert(alert) for alert in alerts]
+
+
+def format_alert(alert: AuditAlert) -> str:
+    emoji_map = {
+        AuditAlertType.CRITICAL: "❌",
+        AuditAlertType.WARN: "⚠️",
+        AuditAlertType.INFO: "🛈",
+    }
+    return (emoji_map[alert.severity] or "") + " " + alert.message
 
 
 def volume_evt_summaries(evts: list[ExecutionEvtVolume]) -> list[str]:
@@ -364,19 +388,6 @@ def image_tag_alert(image: str) -> Optional[str]:
         return f"{emoji_map['unstable']}  image tag is vague :{tag}"
 
     return None
-
-
-def secrets_alerts(k: str, v: Union[str, SecretValue]) -> list[str]:
-    alerts: list[str] = []
-    secret_like_keys = {"password", "token", "secret", "key", "pwd", "pass"}
-    lowered = k.lower()
-    if any(hint in lowered for hint in secret_like_keys):
-        if not isinstance(v, SecretValue):
-            alerts.append(
-                f"❌ {k} looks like a secret but is passed as plaintext — use containup.secret() to redact it safely"
-            )
-
-    return alerts
 
 
 def mount_alert(mount: ServiceMount) -> list[str]:

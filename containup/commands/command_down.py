@@ -18,14 +18,10 @@ class CommandDown:
         self.stack = stack
         self.operator = operator
 
-    def down(self, services: Optional[list[str]] = None) -> None:
-        targets = (
-            self.stack.services
-            if not services
-            else {k: self.stack.services[k] for k in services}
-        )
-        for name, cfg in targets.items():
-            container_name = cfg.container_name or cfg.name
+    def down(self, filter_services: Optional[list[str]] = None) -> None:
+        services = self.stack.filter_services(filter_services)
+        for service in services:
+            container_name = service.container_name or service.name
             try:
                 if self.operator.container_exists(container_name):
                     logger.info(
@@ -40,5 +36,5 @@ class CommandDown:
                         f"Remove container {container_name}: container doesn't exist."
                     )
             except ContainerOperatorException:  # type: ignore
-                logger.info(f"Remove container {name}: not found.")
+                logger.info(f"Remove container {service.name}: not found.")
                 continue
