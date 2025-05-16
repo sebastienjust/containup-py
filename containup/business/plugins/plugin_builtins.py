@@ -1,9 +1,10 @@
+from containup.business.audit.audit_alert import AuditInspector
+from containup.business.audit.audit_container_image import AuditServiceImageInspector
 from containup.business.audit.audit_secrets import AuditSecretsInspector
 from containup.business.audit.audit_service_healthcheck import (
     AuditServiceHealthcheckInspector,
 )
 from containup.business.audit.audit_service_mounts import AuditServiceMountsInspector
-from containup.business.audit.audit_alert import AuditInspector
 from containup.business.plugins.plugin_registry import Plugin
 
 
@@ -18,4 +19,5 @@ class PluginBuiltins(Plugin):
             AuditSecretsInspector(),
             AuditServiceHealthcheckInspector(),
             AuditServiceMountsInspector(),
+            AuditServiceImageInspector(),
         ]

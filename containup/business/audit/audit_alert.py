@@ -16,6 +16,7 @@ class AuditLocations(str, Enum):
     ENVIRONMENT = "environment"
     HEALTHCHECK = "heathcheck"
     MOUNT = "mount"
+    IMAGE = "image"
 
 
 @dataclass
@@ -34,6 +35,9 @@ class AuditAlertLocation:
 
     def mount(self, mount_id: str):
         return AuditAlertLocation(self.location + [AuditLocations.MOUNT, mount_id])
+
+    def image(self):
+        return AuditAlertLocation(self.location + [AuditLocations.IMAGE])
 
 
 @dataclass

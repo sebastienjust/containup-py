@@ -1,6 +1,10 @@
 from dataclasses import dataclass
-from typing import Optional
 
+from containup.business.audit.audit_alert import (
+    AuditAlertType,
+    AuditAlert,
+    AuditAlertLocation,
+)
 from containup.business.audit.audit_report import AuditResult
 from containup.business.execution_listener import (
     ExecutionListener,
@@ -15,11 +19,6 @@ from containup.business.execution_listener import (
     ExecutionEvtNetworkRemoved,
     ExecutionEvtNetworkCreated,
     ExecutionEvtContainerRun,
-)
-from containup.business.audit.audit_alert import (
-    AuditAlertType,
-    AuditAlert,
-    AuditAlertLocation,
 )
 from containup.containup_cli import Config
 from containup.stack.service_mounts import BindMount, VolumeMount
@@ -104,7 +103,12 @@ def report_standard(
             key_commands_formatted = f"   {key_commands:<{key_len}}:"
             key_empty_formatted = f"   {key_empty:<{key_len}} "
 
-            lines.append(f"{container_number}. {c.name} ({image_str(c.image)})")
+            image_alerts_fmt = format_alerts_single_line(
+                audit_report, AuditAlertLocation.service(c.name).image()
+            )
+            lines.append(
+                f"{container_number}. {c.name} ({image_str(c.image, image_alerts_fmt)})"
+            )
             if c.network:
                 lines.append(f"{key_network_formatted} {c.network}")
             if c.ports:
@@ -281,35 +285,5 @@ def network_evt_summaries(evts: list[ExecutionEvtNetwork]) -> list[str]:
     return summaries
 
 
-def image_str(image: str) -> str:
-    alert = image_tag_alert(image)
-    return " ".join(part for part in ["image:", image, alert] if part is not None)
-
-
-def image_tag_alert(image: str) -> Optional[str]:
-    """Returns a warning if the image uses a risky tag (latest, implicit, unstable)."""
-
-    risky_tags = {"latest", "dev", "nightly", "snapshot", "beta", "alpha", "rc"}
-    emoji_map = {
-        "latest": "❌",
-        "implicit": "❌",
-        "unstable": "⚠️",
-    }
-
-    if ":" not in image:
-        return (
-            f"{emoji_map['implicit']}  image has no explicit tag (defaults to :latest)"
-        )
-
-    _, tag = image.rsplit(":", 1)
-
-    if tag == "latest":
-        return f"{emoji_map['latest']}  image uses tag :latest"
-
-    if tag in risky_tags:
-        return f"{emoji_map['unstable']}  image uses unstable tag :{tag}"
-
-    if not any(char.isdigit() for char in tag):
-        return f"{emoji_map['unstable']}  image tag is vague :{tag}"
-
-    return None
+def image_str(image: str, image_alerts_fmt: str) -> str:
+    return " ".join(part for part in ["image:", image, image_alerts_fmt] if part != "")
