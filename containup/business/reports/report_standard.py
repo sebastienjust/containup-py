@@ -1,184 +1,38 @@
-import sys
-from abc import ABC, abstractmethod
 from dataclasses import dataclass
-from typing import Optional, TextIO
+from typing import Optional
 
 from containup.business.audit.audit_report import AuditReport
+from containup.business.execution_listener import (
+    ExecutionListener,
+    ExecutionEvt,
+    ExecutionEvtNetwork,
+    ExecutionEvtContainer,
+    ExecutionEvtVolume,
+    ExecutionEvtVolumeExistsCheck,
+    ExecutionEvtVolumeRemoved,
+    ExecutionEvtVolumeCreated,
+    ExecutionEvtNetworkExistsCheck,
+    ExecutionEvtNetworkRemoved,
+    ExecutionEvtNetworkCreated,
+    ExecutionEvtContainerRun,
+)
 from containup.business.model.audit_alert import (
     AuditAlertType,
     AuditAlert,
     AuditAlertLocation,
 )
 from containup.containup_cli import Config
-from containup.stack.network import Network
 from containup.stack.service_mounts import BindMount, VolumeMount
 from containup.stack.stack import Service, Stack
-from containup.stack.volume import Volume
 
 
-@dataclass
-class ExecutionEvt(ABC):
-    pass
-
-
-@dataclass
-class ExecutionEvtVolume(ExecutionEvt):
-    volume_id: str
-
-
-@dataclass
-class ExecutionEvtVolumeExistsCheck(ExecutionEvtVolume):
-    volume_id: str
-    exists: bool
-
-
-@dataclass
-class ExecutionEvtVolumeRemoved(ExecutionEvtVolume):
-    volume_id: str
-
-
-@dataclass
-class ExecutionEvtVolumeCreated(ExecutionEvtVolume):
-    volume_id: str
-    volume: Volume
-
-
-@dataclass
-class ExecutionEvtContainer(ExecutionEvt):
-    container_id: str
-
-
-@dataclass
-class ExecutionEvtContainerExistsCheck(ExecutionEvtContainer):
-    container_id: str
-    exists: bool
-
-
-@dataclass
-class ExecutionEvtContainerRemoved(ExecutionEvtContainer):
-    container_id: str
-
-
-@dataclass
-class ExecutionEvtContainerRun(ExecutionEvtContainer):
-    container_id: str
-    container: Service
-
-
-@dataclass
-class ExecutionEvtNetwork(ExecutionEvt):
-    network_id: str
-
-
-@dataclass
-class ExecutionEvtNetworkExistsCheck(ExecutionEvtNetwork):
-    network_id: str
-    exists: bool
-
-
-@dataclass
-class ExecutionEvtNetworkRemoved(ExecutionEvtNetwork):
-    network_id: str
-
-
-@dataclass
-class ExecutionEvtNetworkCreated(ExecutionEvtNetwork):
-    network_id: str
-    network: Network
-
-
-class ExecutionAuditor:
-    @abstractmethod
-    def record(self, message: ExecutionEvt) -> None:
-        pass
-
-    @abstractmethod
-    def flush(self, audit_report: AuditReport) -> None:
-        pass
-
-
-class StdoutAuditor(ExecutionAuditor):
-    def __init__(self, stack: Stack, config: Config, stream: Optional[TextIO] = None):
-        self._messages: list[ExecutionEvt] = []
-        self._stream: TextIO = stream or sys.stdout
-        self._stack = stack
-        self._config = config
-
-    def record(self, message: ExecutionEvt) -> None:
-        self._messages.append(message)
-
-    def flush(self, audit_report: AuditReport) -> None:
-        print(
-            _render_readable_summary(
-                self._messages, self._stack, self._config, audit_report
-            ),
-            file=self._stream,
-        )
-        # for msg in self._messages:
-        #     print(msg, file=self._stream)
-
-
-class VolumeEvts:
-    def __init__(self, volume_id: str, evts: list[ExecutionEvtVolume]):
-        self.volume_id = volume_id
-        self.evts = evts
-
-
-@dataclass
-class NetworkEvts:
-    network_id: str
-    evts: list[ExecutionEvtNetwork]
-
-
-@dataclass
-class ContainerEvts:
-    container_id: str
-    evts: list[ExecutionEvtContainer]
-
-
-class AuditorError(Exception):
-    pass
-
-
-@dataclass
-class GroupEvts:
-    volumes: list[VolumeEvts]
-    networks: list[NetworkEvts]
-    containers: list[ContainerEvts]
-
-
-def _group_evts(evts: list[ExecutionEvt]) -> GroupEvts:
-    evts_volume: dict[str, list[ExecutionEvtVolume]] = {}
-    evts_network: dict[str, list[ExecutionEvtNetwork]] = {}
-    evts_container: dict[str, list[ExecutionEvtContainer]] = {}
-    for evt in evts:
-        if isinstance(evt, ExecutionEvtVolume):
-            key = evt.volume_id
-            evts_volume.setdefault(key, []).append(evt)
-        elif isinstance(evt, ExecutionEvtNetwork):
-            key = evt.network_id
-            evts_network.setdefault(key, []).append(evt)
-        elif isinstance(evt, ExecutionEvtContainer):
-            key = evt.container_id
-            evts_container.setdefault(key, []).append(evt)
-        else:
-            raise AuditorError(f"Unhandled event type {evt}")
-    volume_evts: list[VolumeEvts] = [
-        VolumeEvts(volume_id=k, evts=v) for k, v in evts_volume.items()
-    ]
-    network_evts: list[NetworkEvts] = [
-        NetworkEvts(network_id=k, evts=v) for k, v in evts_network.items()
-    ]
-    container_evts: list[ContainerEvts] = [
-        ContainerEvts(container_id=k, evts=v) for k, v in evts_container.items()
-    ]
-
-    return GroupEvts(volume_evts, network_evts, container_evts)
-
-
-def _render_readable_summary(
-    evts: list[ExecutionEvt], stack: Stack, config: Config, audit_report: AuditReport
+def report_standard(
+    execution_listener: ExecutionListener,
+    stack: Stack,
+    config: Config,
+    audit_report: AuditReport,
 ) -> str:
+    evts = execution_listener.get_events()
     evt_groups = _group_evts(evts)
 
     lines: list[str] = []
@@ -310,6 +164,64 @@ def _render_readable_summary(
             lines.append("")
 
     return "\n".join(lines)
+
+
+class VolumeEvts:
+    def __init__(self, volume_id: str, evts: list[ExecutionEvtVolume]):
+        self.volume_id = volume_id
+        self.evts = evts
+
+
+@dataclass
+class NetworkEvts:
+    network_id: str
+    evts: list[ExecutionEvtNetwork]
+
+
+@dataclass
+class ContainerEvts:
+    container_id: str
+    evts: list[ExecutionEvtContainer]
+
+
+@dataclass
+class GroupEvts:
+    volumes: list[VolumeEvts]
+    networks: list[NetworkEvts]
+    containers: list[ContainerEvts]
+
+
+class AuditorError(Exception):
+    pass
+
+
+def _group_evts(evts: list[ExecutionEvt]) -> GroupEvts:
+    evts_volume: dict[str, list[ExecutionEvtVolume]] = {}
+    evts_network: dict[str, list[ExecutionEvtNetwork]] = {}
+    evts_container: dict[str, list[ExecutionEvtContainer]] = {}
+    for evt in evts:
+        if isinstance(evt, ExecutionEvtVolume):
+            key = evt.volume_id
+            evts_volume.setdefault(key, []).append(evt)
+        elif isinstance(evt, ExecutionEvtNetwork):
+            key = evt.network_id
+            evts_network.setdefault(key, []).append(evt)
+        elif isinstance(evt, ExecutionEvtContainer):
+            key = evt.container_id
+            evts_container.setdefault(key, []).append(evt)
+        else:
+            raise AuditorError(f"Unhandled event type {evt}")
+    volume_evts: list[VolumeEvts] = [
+        VolumeEvts(volume_id=k, evts=v) for k, v in evts_volume.items()
+    ]
+    network_evts: list[NetworkEvts] = [
+        NetworkEvts(network_id=k, evts=v) for k, v in evts_network.items()
+    ]
+    container_evts: list[ContainerEvts] = [
+        ContainerEvts(container_id=k, evts=v) for k, v in evts_container.items()
+    ]
+
+    return GroupEvts(volume_evts, network_evts, container_evts)
 
 
 def format_alerts_single_line(

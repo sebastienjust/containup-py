@@ -4,11 +4,12 @@ import docker
 
 from containup import containup_cli, Config
 from containup.business.audit.audit_registry import AuditRegistry
+from containup.business.execution_listener import ExecutionListenerStd
 from containup.business.plugins.plugin_builtins import PluginBuiltins
 from containup.business.plugins.plugin_registry import PluginRegistry, register
+from containup.business.reports.report_generator import ReportGenerator
 from containup.commands.command_down import CommandDown
 from containup.commands.command_up import CommandUp
-from containup.commands.execution_auditor import StdoutAuditor
 from containup.infra.docker.docker_operator import DockerOperator
 from containup.infra.dryrun.dryrun_operator import DryRunOperator
 from containup.infra.user_interactions_cli import UserInteractionsCLI
@@ -29,12 +30,13 @@ class StackRunner:
         self.stack = stack
         self.config = config or containup_cli()
         self.client: docker.DockerClient = docker.from_env()
-        self._auditor = StdoutAuditor(self.stack, self.config)
+        self._execution_listener = ExecutionListenerStd()
         register(PluginBuiltins)
         self._plugin_registry = PluginRegistry()
         self._audit_registry = AuditRegistry(self._plugin_registry)
+        self._report_generator = ReportGenerator()
         self.operator = (
-            DryRunOperator(self._auditor)
+            DryRunOperator(self._execution_listener)
             if self.config.dry_run
             else DockerOperator(self.client)
         )
@@ -53,4 +55,8 @@ class StackRunner:
         else:
             raise RuntimeError(f"Unrecognized command {self.config.command}")
         if self.config.dry_run:
-            self._auditor.flush(alerts)
+            print(
+                self._report_generator.generate_report(
+                    self.stack, self.config, self._execution_listener, alerts
+                ),
+            )
