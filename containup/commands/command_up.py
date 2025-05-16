@@ -6,9 +6,7 @@ from containup.commands.container_operator import (
     ContainerOperatorException,
 )
 from containup.commands.user_interactions import UserInteractions
-from containup.stack.stack import (
-    Stack,
-)
+from containup.stack.stack import Stack
 
 logger = logging.getLogger(__name__)
 
@@ -24,18 +22,13 @@ class CommandUp:
         self.operator = operator
         self.user_interactions = user_interactions
 
-    def up(self, services: Optional[List[str]] = None) -> None:
+    def up(self, filter_services: Optional[List[str]] = None) -> None:
         try:
-            logger.debug(f"Running command up with services {services}")
             self._ensure_volumes()
             self._ensure_networks()
-            targets = (
-                self.stack.services.values()
-                if not services
-                else (self.stack.services[k] for k in services)
-            )
-            for cfg in targets:
-                container_name = cfg.container_name or cfg.name
+            services = self.stack.filter_services(filter_services)
+            for service in services:
+                container_name = service.container_name or service.name
 
                 if self.operator.container_exists(container_name):
                     logger.info(f"Container {container_name} exists... removing")
@@ -44,7 +37,7 @@ class CommandUp:
                     logger.info(f"Container {container_name} doesn't exist")
 
                 logger.info(f"Run container {container_name} : start")
-                self.operator.container_run(cfg)
+                self.operator.container_run(service)
                 logger.info(f"Run container {container_name} : start done")
 
         except ContainerOperatorException as e:

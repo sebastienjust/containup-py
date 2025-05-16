@@ -2,12 +2,8 @@ from dataclasses import dataclass
 from typing import Dict
 
 from containup import Service, Volume, Network
-from containup.commands.container_operator import (
-    ContainerOperator,
-    ContainerOperatorException,
-)
-from containup.commands.execution_auditor import (
-    ExecutionAuditor,
+from containup.business.execution_listener import (
+    ExecutionListener,
     ExecutionEvtContainerExistsCheck,
     ExecutionEvtContainerRemoved,
     ExecutionEvtContainerRun,
@@ -16,12 +12,16 @@ from containup.commands.execution_auditor import (
     ExecutionEvtNetworkCreated,
     ExecutionEvtNetworkExistsCheck,
 )
+from containup.commands.container_operator import (
+    ContainerOperator,
+    ContainerOperatorException,
+)
 
 
 class DryRunOperator(ContainerOperator):
     """Operator that does nothing except collecting logs and simulating a fake container operator"""
 
-    def __init__(self, auditor: ExecutionAuditor):
+    def __init__(self, auditor: ExecutionListener):
         self._containers: Dict[str, DryRunContainer] = {}
         self._volumes: Dict[str, DryRunVolume] = {}
         self._networks: Dict[str, DryRunNetwork] = {}
