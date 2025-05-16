@@ -26,28 +26,28 @@ This helps gauge whether the project is worth pushing further.
 * `docker-compose.yml` + `.env` + `bash` + `make` + `envsubst` + YAML templating
 * Can't branch, can't loop, can't read a secret, can't debug
 * One file per env, or one giant template nobody wants to touch
-* You pray it works, you don't know what will run
+* Fragile chains of tools just to "start containers"
+* You pray it works, you don't know what will run 
+* "dev", "staging", "prod" — and 5 hacks per environment 🥵
 
-🧩 "dev", "staging", "prod" — and 5 hacks per environment
-
----
+> Describing dynamic systems in static files that can’t even branch. What could go wrong? 🙃 
 
 😌 **After**
 
 ```python
-if env == "prod":
-    stack.add(Service(name="db", image="postgres", environment={"PASS": get_secret()}))
+dbpass = vault.get_password("db") if env == "prod" else gopass.get_password("dev_db")
+stack.add(Service(name="db", image="postgres", environment={"PASS": secret(dbpass)}))
 ```
 
 ```bash
-./stack.py up --dry-run   # ✅ dry-run to inspect  
+./stack.py up --dry-run   # ✅ dry-run to inspect → flaky images, secret access, env logic
 ./stack.py up             # 🚀 launch your stack
 ```
 
-🧠 One Python script
-🔁 Conditionals, loops, logic
-🔐 Secrets, context-aware behavior
-🧪 Testable, readable, controlled
+- 🧠 One Python script
+- 🔁 Conditionals, loops, logic
+- 🔐 Secrets, context-aware behavior
+- 🧪 Testable, readable, controlled
 
 **→ From YAML + hacks to real code you can trust.**
 **No glue, no guessing, no mess.**
