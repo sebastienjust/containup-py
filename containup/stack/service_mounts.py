@@ -1,10 +1,33 @@
-from dataclasses import dataclass
+import uuid
+from abc import ABC, abstractmethod
+from dataclasses import dataclass, field
 from typing import List, Optional, Union
+
 from docker.types import DriverConfig
 
 
+class ServiceMount(ABC):
+
+    @property
+    def id(self) -> str:
+        return self._id
+
+    _id: str = field(default_factory=lambda: str(uuid.uuid4()))
+    """Private identifier, needed for reports. Added because of a limitation in docker where mounts don't have a recognisable unique key (the target field is not enough as it could be duplicated"""
+
+    target: str = ""
+    """Path inside the container where the bind will be mounted."""
+
+    read_only: Optional[bool] = None
+    """If True, mount is read-only."""
+
+    @abstractmethod
+    def type(self) -> str:
+        pass
+
+
 @dataclass
-class BindMount:
+class BindMount(ServiceMount):
     """
     Represents a Docker 'bind' mount (host directory mounted into the container).
     """
@@ -24,13 +47,14 @@ class BindMount:
     propagation: Optional[str] = None
     """Mount propagation mode with the value [r]private, [r]shared, or [r]slave."""
 
-    @staticmethod
-    def type():
+    _id: str = field(default_factory=lambda: str(uuid.uuid4()))
+
+    def type(self) -> str:
         return "bind"
 
 
 @dataclass
-class VolumeMount:
+class VolumeMount(ServiceMount):
     """Represents a Docker volume mount."""
 
     source: str
@@ -54,13 +78,18 @@ class VolumeMount:
     driver_config: Optional[DriverConfig] = None
     """Name and configuration of the driver used to create the volume."""
 
-    @staticmethod
-    def type():
+    _id: str = field(default_factory=lambda: str(uuid.uuid4()))
+
+    @property
+    def id(self) -> str:
+        return self._id
+
+    def type(self) -> str:
         return "volume"
 
 
 @dataclass
-class TmpfsMount:
+class TmpfsMount(ServiceMount):
     """
     Represents a Docker tmpfs mount (in-memory filesystem).
     """
@@ -80,10 +109,8 @@ class TmpfsMount:
     tmpfs_mode: Optional[int] = None
     """Filesystem permission mode (e.g., 1777)."""
 
-    @staticmethod
-    def type():
+    def type(self):
         return "tmp"
 
 
-ServiceMount = Union[VolumeMount, BindMount, TmpfsMount]
 ServiceMounts = List[ServiceMount]

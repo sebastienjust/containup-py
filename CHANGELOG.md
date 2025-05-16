@@ -15,6 +15,8 @@ and uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 - Dry-run feature: previsualize how the stack will be built. Generates a report on stdio (console output).
 - Secrets management: you can secure your secrets while building the stack (Fixes #41)
+- Extendable plugin registry: you can add your own plugins
+- Extension point for audits: bring your own stack audits
 
 ### Fixed
 
