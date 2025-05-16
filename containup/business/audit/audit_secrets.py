@@ -38,7 +38,7 @@ def secrets_alerts(
                 AuditAlert(
                     AuditAlertType.CRITICAL,
                     "looks like a secret but is passed as plaintext — use containup.secret() to redact it safely",
-                    AuditAlertLocation(["service", service_id, "environment", k]),
+                    AuditAlertLocation.service(service_id).environment(k),
                 ),
             )
 

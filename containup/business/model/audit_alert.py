@@ -20,6 +20,13 @@ class AuditLocations(str, Enum):
 class AuditAlertLocation:
     location: list[str]
 
+    @staticmethod
+    def service(service_name: str):
+        return AuditAlertLocation([AuditLocations.SERVICE, service_name])
+
+    def environment(self, key: str):
+        return AuditAlertLocation(self.location + [AuditLocations.ENVIRONMENT, key])
+
 
 @dataclass
 class AuditAlert:

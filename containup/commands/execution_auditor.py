@@ -288,7 +288,7 @@ def _render_readable_summary(
                     key = key_environment_formatted if i == 0 else key_empty_formatted
                     alert_msg = format_alerts_single_line(
                         audit_report,
-                        AuditAlertLocation(["service", c.name, "environment", env_key]),
+                        AuditAlertLocation.service(c.name).environment(env_key),
                     )
                     lines.append(f"{key} {env_key}={env_value} {alert_msg}")
             healtcheck = (
