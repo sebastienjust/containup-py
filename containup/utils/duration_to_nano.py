@@ -30,3 +30,7 @@ def duration_to_nano(value: str) -> int:
         )
 
     return number
+
+
+def duration_to_seconds(value: str) -> float:
+    return (duration_to_nano(value) * 1.0) / 1_000_000_000

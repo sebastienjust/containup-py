@@ -44,7 +44,6 @@ class StackRunner:
 
     # Handle command line parsing and launches the commands on the stack
     def run(self):
-
         alerts = self._audit_registry.inspect(self.stack)
         if self.config.command == "up":
             CommandUp(self.stack, self.operator, self.user_interactions).up(

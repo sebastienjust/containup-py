@@ -13,6 +13,49 @@ logic in Python. That means you can:
 2. Wait for it to be fully ready (e.g., by polling a port or making a health check request).
 3. Then launch dependent services.
 
+## Use health checks
+
+An _internal_ health check is a health check that docker runs inside the container itself. 
+
+Some image (not much) provide commands that you can run inside the container.
+
+```python
+from containup import (Stack, Service, CmdHealthcheck, HealthcheckOptions, port, containup_run, secret)
+
+stack = Stack("db-stack")
+user = "myapp"
+stack.add(Service(
+    name="sample-db",
+    image="postgres:17",
+    ports=[port(5432, 5432)],
+    environment={
+        "POSTGRES_USER": user,
+        "POSTGRES_PASSWORD": secret("dummy", "dummy"),
+    },
+    healthcheck=CmdHealthcheck(
+        ["pg_isready", "-U", user],
+        options=HealthcheckOptions(
+            interval="10s", timeout="5s", retries=3, start_period="5s"
+        ),
+    ),
+))
+
+containup_run(stack)
+```
+
+
+Containup
+
+## Use depends on
+
+
+
+
+
+## Stategy: use external health checks
+
+
+
 ## Stategy: two stacks
 
 Ok it's tricky but it does the job.
@@ -44,13 +87,9 @@ def wait_for_postgres(host, port, timeout=30):
             time.sleep(1)
     raise TimeoutError("Postgres did not become ready in time.")
 
-stack_db = Stack("db-stack")
+stack = Stack("db-stack")
+stack.add(Service(name="db", image="postgres:15", ports=[5432], healthcheck=ExternalHealthCheck(lambda: wait_for_postgres("localhost", 5432))))
 
-# Add the database first
-stack_db.add(Service(name="db", image="postgres:15", ports=[5432]))
-
-# Run stack so db starts
-containup_run(stack_db)
 
 # Wait for readiness
 # But only if we do "up"
