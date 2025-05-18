@@ -59,7 +59,7 @@ containup_run(stack)
 ## Try it now 
 
 ```
-curl -sSL https://raw.githubusercontent.com/sebastienjust/containup/main/install-containup.sh | bash
+curl -sSL -o containup-try.sh https://raw.githubusercontent.com/sebastienjust/containup-py/main/installer/containup-try.sh && bash ./containup-try.sh 
 ```
 
 🔥 Ready in 10s — launches an example of a full Odoo stack with PostgreSQL, Redis, Traefik, and pgAdmin.
