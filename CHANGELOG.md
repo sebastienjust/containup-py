@@ -5,6 +5,24 @@ All notable changes to this project will be documented in this file.
 This project follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 and uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.6] - 2025-05-18
+
+### Added
+
+- Real healthchecks
+- depends_on fully functionnal and really depending on healthchecks.
+- improved reporting on healthchecks and depends_on.
+- issue warning if depends_on points to a service without healthcheck.
+
+### Fixed
+
+- Installer script to test the features was not pushed.
+- Bad dependency on typings_extensions.
+
+### Documentation
+
+- Improved Readme and better wording.
+
 ## [0.1.6] - 2025-05-16
 
 ### Breaking changes
