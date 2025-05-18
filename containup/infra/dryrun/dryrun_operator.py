@@ -46,6 +46,9 @@ class DryRunOperator(ContainerOperator):
         self._containers[container_id] = DryRunContainer(container_id, service)
         self._auditor.record(ExecutionEvtContainerRun(container_id, service))
 
+    def container_wait_healthy(self, service: Service):
+        return
+
     def volume_exists(self, volume_name: str) -> bool:
         result = volume_name in self._volumes
         self._auditor.record(

@@ -20,6 +20,14 @@ class ContainerOperator(ABC):
         pass
 
     @abstractmethod
+    def container_wait_healthy(self, service: Service):
+        """
+        Waits for container to be healthy.
+        Raises exception if not healty or if dead.
+        """
+        pass
+
+    @abstractmethod
     def volume_exists(self, volume_name: str) -> bool:
         """Ensure that the volume exists"""
         pass
