@@ -42,7 +42,7 @@ class DockerOperator(ContainerOperator):
             return False
         except DockerException as e:
             raise ContainerOperatorException(
-                "Failed to check if container {container_name} exists"
+                f"Failed to check if container {container_name} exists: {e}"
             ) from e
 
     def container_remove(self, container_name: str):
@@ -51,7 +51,7 @@ class DockerOperator(ContainerOperator):
             self.client.containers.get(container_name).remove(force=True)
         except DockerException as e:
             raise ContainerOperatorException(
-                "Failed to remove container {container_name}"
+                f"Failed to remove container {container_name}: {e}"
             ) from e
 
     def container_run(self, service: Service):
@@ -82,7 +82,7 @@ class DockerOperator(ContainerOperator):
             )
         except DockerException as e:
             raise ContainerOperatorException(
-                "Failed to run container {container_name} : failed: {e}"
+                f"Failed to run container {container_name} : {e}"
             ) from e
 
     def container_wait_healthy(self, service: Service) -> None:
@@ -138,7 +138,7 @@ class DockerOperator(ContainerOperator):
 
         except DockerException as e:
             raise ContainerOperatorException(
-                f"Failed to get health status for container {container_name}"
+                f"Failed to get health status for container {container_name}: {e}"
             ) from e
 
     def volume_exists(self, volume_name: str) -> bool:
