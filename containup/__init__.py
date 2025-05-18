@@ -30,4 +30,4 @@ from containup.containup_run import containup_run as containup_run
 from containup.utils.secret_value import SecretValue as SecretValue, secret as secret
 
 # Updated by bumpver
-__version__ = "v0.1.7"
+__version__ = "v0.1.8"
