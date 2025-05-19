@@ -76,6 +76,7 @@ class DockerOperator(ContainerOperator):
                 ports=ports_to_docker_spec(service.ports),  # type: ignore
                 mounts=mounts_to_docker_specs(service.mounts_all()),
                 network=service.network,
+                labels=service.labels,
                 restart_policy=service.restart,
                 detach=True,
                 healthcheck=healthcheck_to_docker_spec_unsafe(service.healthcheck),
