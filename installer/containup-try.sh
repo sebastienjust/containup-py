@@ -76,8 +76,8 @@ response=${response:-$default_sample}
 if [[ "$response" =~ ^[Yy]$ ]]; then
   echo "Proceeding..."
   echo "----------------------------------------"
-  echo "✅ Example stack (from samples/sample_web_stack.py)"
-  curl -sSL -o containup_stack.py https://raw.githubusercontent.com/sebastienjust/containup-py/main/samples/sample_web_stack.py
+  echo "✅ Example stack (from samples/sample_odoo.py)"
+  curl -sSL -o containup_stack.py https://raw.githubusercontent.com/sebastienjust/containup-py/main/samples/sample_odoo.py
   echo "   This is the output of : python3 containup_stack.py up --dry-run"
   echo "----------------------------------------"
   python3 containup_stack.py up --dry-run
@@ -97,8 +97,8 @@ echo "What's next:"
 echo " - open the directory   : cd $target_dir"
 echo " - activate .venv       : source .venv/bin/activate"
 echo " - edit your script     : nano containup_stack.py"
-echo " - dry run your changes : containup_stack.py up --dry-run"
-echo " - run for real         : containup_stack.py up"
-echo " - stop everything      : containup_stack.py down"
-echo " - get help             : containup_stack.py --help"
+echo " - dry run your changes : python containup_stack.py up --dry-run"
+echo " - run for real         : python containup_stack.py up"
+echo " - stop everything      : python containup_stack.py down"
+echo " - get help             : python containup_stack.py --help"
 echo "----------------------------------------"
