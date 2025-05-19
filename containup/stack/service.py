@@ -84,6 +84,11 @@ class Service:
     The command to run in the container. 
     """
 
+    labels: Dict[str, str] = field(default_factory=lambda: {})
+    """
+    Dictionnary of labels to add to container.
+    """
+
     restart: Optional[_RestartPolicy] = None
     """
     The behavior to apply when the container exits. The default is not to restart.
