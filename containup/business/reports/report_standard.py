@@ -1,3 +1,4 @@
+from dataclasses import dataclass
 from containup.business.audit.audit_alert import (
     AuditAlertType,
     AuditAlert,
@@ -98,43 +99,67 @@ def report_network(
     return [line]
 
 
+@dataclass
+class ContainerItemKey:
+    name: str
+
+
+class ContainerItemNames:
+    network = ContainerItemKey("Network")
+    ports = ContainerItemKey("Ports")
+    mounts = ContainerItemKey("Mounts")
+    environment = ContainerItemKey("Environment")
+    healthcheck = ContainerItemKey("Healthcheck")
+    depends_on = ContainerItemKey("Depends on")
+    commands = ContainerItemKey("Commands")
+    labels = ContainerItemKey("Labels")
+
+    def __init__(self):
+        self.max_length = self._container_item_names_max_length()
+        key_empty = ""
+        self.key_empty_formatted = f"   {key_empty:<{self.max_length}} "
+        pass
+
+    def _container_item_names_max_length(self):
+        bigger = max(
+            (
+                v.name
+                for k, v in vars(ContainerItemNames).items()
+                if isinstance(v, ContainerItemKey) and not k.startswith("__")
+            ),
+            key=len,
+        )
+        return len(bigger)
+
+    def format(self, item_key: ContainerItemKey, lines: list[str]) -> list[str]:
+        result: list[str] = []
+        for i, value in enumerate(lines):
+            key = (
+                self.key_empty_formatted
+                if i > 0
+                else f"    {item_key.name:<{self.max_length}}:"
+            )
+            result.append(key + " " + value)
+        return result
+
+
 def report_container(
     container_number: int, c: Service, audit_report: AuditResult
 ) -> list[str]:
     lines: list[str] = []
-    key_network = "Network"
-    key_ports = "Ports"
-    key_mounts = "Volumes"
-    key_environment = "Environment"
-    key_healthcheck = "Healthcheck"
-    key_depends_on = "Depends on"
-    key_commands = "Commands"
-    key_empty = ""
-    key_len = max(
-        len(key_network),
-        len(key_mounts),
-        len(key_environment),
-        len(key_healthcheck),
-        len(key_depends_on),
-        len(key_commands),
-    )
-    key_network_formatted = f"   {key_network:<{key_len}}:"
-    key_ports_formatted = f"   {key_ports:<{key_len}}:"
-    key_mounts_formatted = f"   {key_mounts:<{key_len}}:"
-    key_environment_formatted = f"   {key_environment:<{key_len}}:"
-    key_healthcheck_formatted = f"   {key_healthcheck:<{key_len}}:"
-    key_commands_formatted = f"   {key_commands:<{key_len}}:"
-    key_depends_on_formatted = f"   {key_depends_on:<{key_len}}:"
-    key_empty_formatted = f"   {key_empty:<{key_len}} "
+
+    item_names = ContainerItemNames()
 
     image_alerts_fmt = format_alerts_single_line(
         audit_report, AuditAlertLocation.service(c.name).image()
     )
+
     lines.append(
         f"{container_number}. {c.name} ({image_str(c.image, image_alerts_fmt)})"
     )
     if c.network:
-        lines.append(f"{key_network_formatted} {c.network}")
+        lines.extend(item_names.format(item_names.network, [c.network]))
+
     if c.ports:
         port_lines: list[str] = []
         for p in c.ports:
@@ -142,10 +167,11 @@ def report_container(
                 port_lines.append(f"{p.host_port}:{p.container_port}/{p.protocol}")
             else:
                 port_lines.append(f"{p.container_port}/{p.protocol}")
-        lines.append(f"{key_ports_formatted} {', '.join(port_lines)}")
+        lines.extend(item_names.format(item_names.network, [", ".join(port_lines)]))
+
     if c.volumes:
-        for i, vol in enumerate(c.volumes):
-            key = key_mounts_formatted if i == 0 else key_empty_formatted
+        volume_lines: list[str] = []
+        for vol in c.volumes:
             source = (
                 vol.source
                 if isinstance(vol, BindMount)
@@ -157,31 +183,35 @@ def report_container(
                 if read_only is None
                 else "read-only" if read_only else "read-write"
             )
-            lines.append(f"{key} {vol.target} → ({vol.type()}) {source} {rw}")
+            volume_lines.append(f"{vol.target} → ({vol.type()}) {source} {rw}")
             location = AuditAlertLocation.service(c.name).mount(vol.id)
             alerts = to_formatted_alert_list(audit_report.query(location))
             for alert in alerts:
-                lines.append(f"{key_empty_formatted}     {alert}")
+                volume_lines.append(f"     {alert}")
+        lines.extend(item_names.format(item_names.mounts, volume_lines))
+
     if c.environment:
-        for i, (env_key, env_value) in enumerate(c.environment.items()):
-            key = key_environment_formatted if i == 0 else key_empty_formatted
+        environment_lines: list[str] = []
+        for env_key, env_value in c.environment.items():
             location = AuditAlertLocation.service(c.name).environment(env_key)
             alerts = to_formatted_alert_list(audit_report.query(location))
-            lines.append(f"{key} {env_key}={env_value}")
+            environment_lines.append(f"{env_key}={env_value}")
             for alert in alerts:
-                lines.append(f"{key_empty_formatted}     {alert}")
+                environment_lines.append(f"     {alert}")
+        lines.extend(item_names.format(item_names.environment, environment_lines))
 
-    for i, dependency_name in enumerate(c.depends_on):
-        key = key_depends_on_formatted if i == 0 else key_empty_formatted
-        lines.append(f"{key} {dependency_name}")
+    for dependency_name in c.depends_on:
+        depends_on_lines: list[str] = []
+        depends_on_lines.append(dependency_name)
         location = AuditAlertLocation.service(c.name).depends_on(dependency_name)
         alerts = to_formatted_alert_list(audit_report.query(location))
         for alert in alerts:
-            lines.append(f"{key_empty_formatted}     {alert}")
+            depends_on_lines.append(f"     {alert}")
+        lines.extend(item_names.format(item_names.depends_on, depends_on_lines))
 
     if c.command:
         cmd = " ".join(c.command)
-        lines.append(f"{key_commands_formatted} {cmd}")
+        lines.extend(item_names.format(item_names.commands, [cmd]))
 
     healthcheck = c.healthcheck
     name = None if healthcheck is None else healthcheck.summary()
@@ -190,10 +220,12 @@ def report_container(
         audit_report.query(AuditAlertLocation.service(c.name).healthcheck())
     )
     healthcheck_lines_safe = [line for line in healthcheck_lines if line is not None]
+    lines.extend(item_names.format(item_names.healthcheck, healthcheck_lines_safe))
 
-    for i, healtcheck_line in enumerate(healthcheck_lines_safe):
-        key = key_healthcheck_formatted if i == 0 else key_empty_formatted
-        lines.append(f"{key} {healtcheck_line}")
+    label_lines: list[str] = []
+    for name, value in c.labels.items():
+        label_lines.append(name + "=" + value)
+    lines.extend(item_names.format(item_names.labels, label_lines))
 
     return lines
 
