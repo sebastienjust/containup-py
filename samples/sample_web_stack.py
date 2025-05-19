@@ -2,41 +2,47 @@
 
 import os
 
-from containup import (
-    Stack,
-    Service,
-    Volume,
-    Network,
-    containup_run,
-    VolumeMount,
-    port,
-    BindMount,
-    secret,
-)
-from containup.stack.service_healthcheck import CmdShellHealthcheck, HealthcheckOptions
+from containup import (Stack, Service, Volume, Network, containup_run, VolumeMount, port, BindMount, secret, CmdShellHealthcheck, HealthcheckOptions)
 
-# logging.basicConfig(level=logging.INFO, format="%(asctime)s %(message)s")
+# Sample script to demonstrate a stack with Odoo
+#
+# To be able to test this stack, you need to add in your /etc/hosts
+# 
+# 192.168.122.179 traefik.docker.local
+# 192.168.122.179 whoami.docker.local
+# 192.168.122.179 odoo.docker.local
+# 192.168.122.179 pgadmin.docker.local
+#
+# (and replace 192.168.122.179 with 127.0.0.1 or your own server IP)
+#
+# Then you can go to :
+# - http://traefik.docker.local:8080
+# - http://whoami.docker.local
+# - http://odoo.docker.local
+# - http://pgadmin.docker.local
 
-# Environment variables (for example from l'environnement)
-app_env = os.environ.get("APP_ENV", "dev")
-db_password = os.environ.get("DB_PASSWORD", "defaultpass")
-odoo_password = os.environ.get("ODOO_PASSWORD", "defaultpass")
+
+# Environment variables
+
+db_user = "odoo"
+db_password = os.environ.get("DB_PASSWORD", "odoo")
 pgadmin_password = os.environ.get("PGADMIN_PASSWORD", "defaultpass")
+app_env = os.environ.get("APP_ENV", "dev")
+
 
 stack = Stack("odoo-stack")
 
 # Networks
 stack.add(
     [
-        Network("frontend"),
-        Network("backend"),
+        Network("odoo"),
     ]
 )
 
 # Persistent volumes
 stack.add(
     [
-        Volume("pgdata"),
+        Volume("pg_data"),
         Volume("odoo_data"),
         Volume("pgadmin_data"),
     ]
@@ -46,14 +52,14 @@ stack.add(
 stack.add(
     Service(
         name="postgres",
-        image="postgres:15",
+        image="postgres:17.5",
         environment={
-            "POSTGRES_DB": "postgres",
-            "POSTGRES_USER": "odoo",
+            "POSTGRES_USER": db_user,
             "POSTGRES_PASSWORD": secret("postgres password", db_password),
+            "POSTGRES_DB": "postgres",
         },
-        volumes=[VolumeMount("pgdata", "/var/lib/postgresql/data")],
-        network="backend",
+        volumes=[VolumeMount("pg_data", "/var/lib/postgresql/data")],
+        network="odoo",
         ports=[port(container_port=5432)],
         healthcheck=CmdShellHealthcheck(
             "pg_isready -U odoo",
@@ -62,37 +68,26 @@ stack.add(
     )
 )
 
-# Cache Redis (for Odoo)
-stack.add(
-    Service(
-        name="redis",
-        image="redis:7",
-        network="backend",
-        ports=[port(container_port=6379)],
-    )
-)
-
 # Odoo (ERP)
 stack.add(
     Service(
         name="odoo",
-        image="odoo:16",
-        # depends_on=["postgres", "redis"],
+        image="odoo:18",
+        depends_on=["postgres"],
         environment={
-            "HOST": "0.0.0.0",
-            "PORT": "8069",
-            "USER": "odoo",
-            "PASSWORD": odoo_password,
-            "PGHOST": "postgres",
-            "PGUSER": "odoo",
-            "PGPASSWORD": db_password,
+            "HOST": "postgres",
+            "PORT": "5432",
+            "USER": db_user,
+            "PASSWORD": secret("db_password", db_password),
         },
         volumes=[
             VolumeMount("odoo_data", "/var/lib/odoo"),
-            BindMount("/opt/tmp/logs", "/var/logs/odo", read_only=True),
         ],
-        network="backend",
+        network="odoo",
         ports=[port(container_port=8069, host_port=8069)],
+        labels={
+            "traefik.http.routers.odoo.rule": "Host(`odoo.docker.local`)"
+        }
     )
 )
 
@@ -103,14 +98,16 @@ stack.add(
         image="dpage/pgadmin4",
         environment={
             "PGADMIN_DEFAULT_EMAIL": "admin@example.com",
-            "PGADMIN_DEFAULT_PASSWORD": pgadmin_password,
+            "PGADMIN_DEFAULT_PASSWORD": secret("PGADMIN_DEFAULT_PASSWORD", pgadmin_password),
         },
         volumes=[
             VolumeMount("pgadmin_data", "/var/lib/pgadmin"),
-            BindMount("/etc/postgresql", "/etc/postgresql", read_only=True),
         ],
-        network="frontend",
+        network="odoo",
         ports=[port(container_port=80, host_port=5050)],
+        labels={
+            "traefik.http.routers.pgadmin.rule": "Host(`pgadmin.docker.local`)"
+        }
     )
 )
 
@@ -118,17 +115,36 @@ stack.add(
 stack.add(
     Service(
         name="traefik",
-        image="traefik:v2.10",
-        command=[
-            "--api.insecure=true",
-            "--providers.docker=true",
-            "--entrypoints.web.address=:80",
-        ],
+        # The official v3 Traefik docker image
+        image="traefik:v3.4",
+        # Enables the web UI and tells Traefik to listen to docker
+        command=[ "--api.insecure=true", "--providers.docker=true", "--entrypoints.web.address=:80", "--providers.docker.exposedbydefault=true" ],
         ports=[
-            port(container_port=80, host_port=80),
-            port(container_port=8080, host_port=8081),  # UI traefik
+            # The HTTP port
+            port(80, 80),
+            # The Web UI (enabled by --api.insecure=true)
+            port(8080, 8080),
         ],
-        network="frontend",
+        volumes=[
+            BindMount("/var/run/docker.sock", "/var/run/docker.sock")
+        ],
+        network="odoo",
+        
+    )
+)
+
+# Traefik whoami
+# A container that exposes an API to show its IP address
+
+stack.add(
+    Service(
+        name="traefik-whoami", 
+        image="traefik/whoami", 
+        depends_on=["traefik"],
+        network="odoo",
+        labels={
+            "traefik.http.routers.traefik-whoami.rule": "Host(`whoami.docker.local`)"
+        }
     )
 )
 
