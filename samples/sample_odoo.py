@@ -2,12 +2,24 @@
 
 import os
 
-from containup import (Stack, Service, Volume, Network, containup_run, VolumeMount, port, BindMount, secret, CmdShellHealthcheck, HealthcheckOptions)
+from containup import (
+    Stack,
+    Service,
+    Volume,
+    Network,
+    containup_run,
+    VolumeMount,
+    port,
+    BindMount,
+    secret,
+    CmdShellHealthcheck,
+    HealthcheckOptions,
+)
 
 # Sample script to demonstrate a stack with Odoo
 #
 # To be able to test this stack, you need to add in your /etc/hosts
-# 
+#
 # 192.168.122.179 traefik.docker.local
 # 192.168.122.179 whoami.docker.local
 # 192.168.122.179 odoo.docker.local
@@ -85,9 +97,7 @@ stack.add(
         ],
         network="odoo",
         ports=[port(container_port=8069, host_port=8069)],
-        labels={
-            "traefik.http.routers.odoo.rule": "Host(`odoo.docker.local`)"
-        }
+        labels={"traefik.http.routers.odoo.rule": "Host(`odoo.docker.local`)"},
     )
 )
 
@@ -98,16 +108,16 @@ stack.add(
         image="dpage/pgadmin4",
         environment={
             "PGADMIN_DEFAULT_EMAIL": "admin@example.com",
-            "PGADMIN_DEFAULT_PASSWORD": secret("PGADMIN_DEFAULT_PASSWORD", pgadmin_password),
+            "PGADMIN_DEFAULT_PASSWORD": secret(
+                "PGADMIN_DEFAULT_PASSWORD", pgadmin_password
+            ),
         },
         volumes=[
             VolumeMount("pgadmin_data", "/var/lib/pgadmin"),
         ],
         network="odoo",
         ports=[port(container_port=80, host_port=5050)],
-        labels={
-            "traefik.http.routers.pgadmin.rule": "Host(`pgadmin.docker.local`)"
-        }
+        labels={"traefik.http.routers.pgadmin.rule": "Host(`pgadmin.docker.local`)"},
     )
 )
 
@@ -118,18 +128,20 @@ stack.add(
         # The official v3 Traefik docker image
         image="traefik:v3.4",
         # Enables the web UI and tells Traefik to listen to docker
-        command=[ "--api.insecure=true", "--providers.docker=true", "--entrypoints.web.address=:80", "--providers.docker.exposedbydefault=true" ],
+        command=[
+            "--api.insecure=true",
+            "--providers.docker=true",
+            "--entrypoints.web.address=:80",
+            "--providers.docker.exposedbydefault=true",
+        ],
         ports=[
             # The HTTP port
             port(80, 80),
             # The Web UI (enabled by --api.insecure=true)
             port(8080, 8080),
         ],
-        volumes=[
-            BindMount("/var/run/docker.sock", "/var/run/docker.sock")
-        ],
+        volumes=[BindMount("/var/run/docker.sock", "/var/run/docker.sock")],
         network="odoo",
-        
     )
 )
 
@@ -138,13 +150,13 @@ stack.add(
 
 stack.add(
     Service(
-        name="traefik-whoami", 
-        image="traefik/whoami", 
+        name="traefik-whoami",
+        image="traefik/whoami",
         depends_on=["traefik"],
         network="odoo",
         labels={
             "traefik.http.routers.traefik-whoami.rule": "Host(`whoami.docker.local`)"
-        }
+        },
     )
 )
 

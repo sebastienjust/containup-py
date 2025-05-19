@@ -98,10 +98,11 @@ def report_network(
     )
     return [line]
 
+
 @dataclass
 class ContainerItemKey:
     name: str
-    
+
 
 class ContainerItemNames:
     network = ContainerItemKey("Network")
@@ -121,44 +122,44 @@ class ContainerItemNames:
 
     def _container_item_names_max_length(self):
         bigger = max(
-            (v.name for k, v in vars(ContainerItemNames).items() if isinstance(v, ContainerItemKey) and not k.startswith('__')),
-            key=len
+            (
+                v.name
+                for k, v in vars(ContainerItemNames).items()
+                if isinstance(v, ContainerItemKey) and not k.startswith("__")
+            ),
+            key=len,
         )
         return len(bigger)
-    
-    def format(self, item_key: ContainerItemKey, lines:list[str]) -> list[str]:
+
+    def format(self, item_key: ContainerItemKey, lines: list[str]) -> list[str]:
         result: list[str] = []
         for i, value in enumerate(lines):
-            key = self.key_empty_formatted if i > 0 else f"    {item_key.name:<{self.max_length}}:"
+            key = (
+                self.key_empty_formatted
+                if i > 0
+                else f"    {item_key.name:<{self.max_length}}:"
+            )
             result.append(key + " " + value)
-        return result 
-
-
-
+        return result
 
 
 def report_container(
     container_number: int, c: Service, audit_report: AuditResult
 ) -> list[str]:
     lines: list[str] = []
-    
-    item_names = ContainerItemNames()
-    
 
+    item_names = ContainerItemNames()
 
     image_alerts_fmt = format_alerts_single_line(
         audit_report, AuditAlertLocation.service(c.name).image()
     )
 
-    
-
     lines.append(
-
         f"{container_number}. {c.name} ({image_str(c.image, image_alerts_fmt)})"
     )
     if c.network:
         lines.extend(item_names.format(item_names.network, [c.network]))
-        
+
     if c.ports:
         port_lines: list[str] = []
         for p in c.ports:
@@ -166,10 +167,10 @@ def report_container(
                 port_lines.append(f"{p.host_port}:{p.container_port}/{p.protocol}")
             else:
                 port_lines.append(f"{p.container_port}/{p.protocol}")
-        lines.extend(item_names.format(item_names.network, [ ', '.join(port_lines) ]))
-        
+        lines.extend(item_names.format(item_names.network, [", ".join(port_lines)]))
+
     if c.volumes:
-        volume_lines: list[str] =  []
+        volume_lines: list[str] = []
         for vol in c.volumes:
             source = (
                 vol.source
@@ -188,8 +189,6 @@ def report_container(
             for alert in alerts:
                 volume_lines.append(f"     {alert}")
         lines.extend(item_names.format(item_names.mounts, volume_lines))
-
-
 
     if c.environment:
         environment_lines: list[str] = []
@@ -212,7 +211,7 @@ def report_container(
 
     if c.command:
         cmd = " ".join(c.command)
-        lines.extend( item_names.format(item_names.commands, [cmd]))
+        lines.extend(item_names.format(item_names.commands, [cmd]))
 
     healthcheck = c.healthcheck
     name = None if healthcheck is None else healthcheck.summary()
@@ -223,12 +222,10 @@ def report_container(
     healthcheck_lines_safe = [line for line in healthcheck_lines if line is not None]
     lines.extend(item_names.format(item_names.healthcheck, healthcheck_lines_safe))
 
-
     label_lines: list[str] = []
     for name, value in c.labels.items():
         label_lines.append(name + "=" + value)
     lines.extend(item_names.format(item_names.labels, label_lines))
-
 
     return lines
 
