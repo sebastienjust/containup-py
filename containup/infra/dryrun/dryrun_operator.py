@@ -66,7 +66,7 @@ class DryRunOperator(ContainerOperator):
         self._auditor.record(ExecutionEvtNetworkExistsCheck(network_name, result))
         return result
 
-    def network_create(self, stack_name: str,  network: Network) -> None:
+    def network_create(self, stack_name: str, network: Network) -> None:
         self._auditor.record(ExecutionEvtNetworkCreated(network.name, network))
         self._networks[network.name] = DryRunNetwork(network.name, network)
 

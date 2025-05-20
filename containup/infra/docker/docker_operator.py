@@ -1,4 +1,3 @@
-
 import logging
 from typing import Optional
 
@@ -55,7 +54,7 @@ class DockerOperator(ContainerOperator):
                 f"Failed to remove container {container_name}: {e}"
             ) from e
 
-    def container_run(self, stack_name:str, service: Service):
+    def container_run(self, stack_name: str, service: Service):
         """Run a container like docker run"""
         container_name = service.container_name or service.name
 
@@ -106,7 +105,7 @@ class DockerOperator(ContainerOperator):
             name=volume.name,
             driver=volume.driver,
             driver_opts=volume.driver_opts,
-            labels = make_labels(stack_name, volume.labels),
+            labels=make_labels(stack_name, volume.labels),
         )
 
     def network_exists(self, network_name: str) -> bool:
@@ -117,10 +116,10 @@ class DockerOperator(ContainerOperator):
     def network_create(self, stack_name: str, network: Network) -> None:
         """Creates the network"""
         self.client.networks.create(
-            name=network.name, 
-            driver=network.driver, 
-            options=network.options, 
-            labels = make_labels(stack_name, None)
+            name=network.name,
+            driver=network.driver,
+            options=network.options,
+            labels=make_labels(stack_name, None),
         )
 
 
@@ -128,5 +127,5 @@ def make_labels(stack_name: str, labels: Optional[dict[str, str]]) -> dict[str, 
     return {
         **(labels or {}),
         "com.docker.compose.project": stack_name,
-        "containup.stack.name": stack_name
+        "containup.stack.name": stack_name,
     }
