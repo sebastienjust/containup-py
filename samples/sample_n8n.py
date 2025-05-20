@@ -17,12 +17,9 @@ from containup import ( Stack, Service, Volume, Network, containup_run, VolumeMo
 # - in staging and production, no pgadmin, no whoami, more secure traefik
 #
 # Moreover the routes to access the services are not the same in dev, staging
-# and production.
-#
-# - in development, devs can't configure hosts or DNS, so they will get
-#   http://localhost/{service}
-# - in staging, each domain has its DNS https://{service}.staging.mycompany.com
-# - in production : https://{service}.mycompany.com
+# and production. As a special case, it's known that Linux users don't have
+# access to *.docker.localhost. For them, they can use an environment variable
+# to choose their base DNS.
 #
 # Passwords, in this example, are extracted from environment variables. We would
 # have loved to show you a better alternative, but we don't know your tools :)
@@ -42,38 +39,29 @@ from containup import ( Stack, Service, Volume, Network, containup_run, VolumeMo
 # Note: for testing with a browser
 # --------------------------------
 #
-# Linux users: add this in /etc/hosts in Linux :
+# You can access the services using: http://<service>.<basedns>
 #
-# 127.0.0.1 traefik.mycompany.com
-# 127.0.0.1 traefik.staging.mycompany.com
-# 127.0.0.1 whoami.mycompany.com
-# 127.0.0.1 whoami.staging.mycompany.com
+# On "localhost" :
+# - http://trafik.docker.localhost:8008
+# - http://whoami.docker.localhost
+# - http://n8n.docker.localhost
+# - http://pgadmin.docker.localhost
+#
+# Linux users: you don't have access to "*.docker.localhost", please use
+# do something like this : export DEPLOYMENT_DOMAIN_NAME=docker.local
+# before launching the commands. Moreover, you'll have to change your
+# /etc/hosts to add each DNS.
+#
+# Everybody: then you can add some DNS in your /etc/hosts to simulate
+# staging and production environments.
+#
+# Examples:
+#
 # 127.0.0.1 n8n.mycompany.com
 # 127.0.0.1 n8n.staging.mycompany.com
 # 127.0.0.1 pgadmin.mycompany.com
 # 127.0.0.1 pgadmin.staging.mycompany.com
 #
-# If needed - for example, if you launch that in a VM -  replace 127.0.0.1
-# with the real VM's IP adress.
-#
-# Testing the dev mode (no environment variable or APP_ENV=dev):
-# - open http://localhost:8080 -> you have traefik admin console
-# - open http://localhost/whoami -> you have traefik whoami
-# - open http://localhost/pgadmin -> you have pgadmin
-# - open http://localhost/n8n -> you have n8n
-#
-# Testing the staging mode (APP_ENV=staging)
-# - http://traefik.staging.mycompany.com:8080 -> you have nothing (as expected)
-# - http://whoami.staging.mycompany.com -> you have nothing (as expected)
-# - http://pgadmin.staging.mycompany.com -> you have nothing (as expected)
-# - http://n8n.staging.mycompany.com -> you have n8n
-#
-# Testing the prod mode (APP_ENV=staging)
-# - http://traefik.mycompany.com:8080 -> you have nothing (as expected)
-# - http://whoami.mycompany.com -> you have nothing (as expected)
-# - http://pgadmin.mycompany.com -> you have nothing (as expected)
-# - http://n8n.mycompany.com -> you have n8n
-
 
 # Fetch configuration
 # ---------------------
@@ -90,7 +78,7 @@ pgadmin_password = os.environ.get("PGADMIN_PASSWORD", "defaultpass")
 # Define the routing logic
 # ------------------------
 # Select routing method depending on environment.
-# Because it's code, can create functions to avoid complex configuration
+# Because it's code, you can create functions to avoid complex configuration
 
 domain_name = (
     os.environ.get("DEPLOYMENT_DOMAIN_NAME") if os.environ.get("DEPLOYMENT_DOMAIN_NAME") else
@@ -167,6 +155,8 @@ stack.add(
         ],
         network="n8n",
         ports=[port(container_port=5678, host_port=5678)],
+        # Note: here you call the "routing" function defined earlier that
+        # will generate all the labels depending on environment
         labels=routing("n8n"),
     )
 )
@@ -174,9 +164,7 @@ stack.add(
 
 if app_env == "dev":
     # pgAdmin (Admin interface for PostgreSQL)
-    #
-    # only installed in development environment.
-    # No access in staging or production
+    # This won't be launched in production or staging
     stack.add(
         Service(
             name="pgadmin",
@@ -200,12 +188,11 @@ if app_env == "dev":
 stack.add(
     Service(
         name="traefik",
-        # The official v3 Traefik docker image
         image="traefik:v3.4",
-        # Enables the web UI and tells Traefik to listen to docker
         command=[
             # Activates only in dev
             "--api.insecure=true" if app_env == "dev" else "",
+            # Tells Traefik to listen to docker
             "--providers.docker=true",
             "--entrypoints.web.address=:80",
             # Only containers with traefik.enable shall be exposed
