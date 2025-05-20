@@ -59,7 +59,7 @@ containup_run(stack)
 ## Try it now 
 
 ```
-curl -sSL -o containup-try.sh https://raw.githubusercontent.com/sebastienjust/containup-py/main/installer/containup-try.sh && bash ./containup-try.sh 
+curl -sSL -o containup-try.sh https://raw.githubusercontent.com/sebastienjust/containup-py/main/samples/containup-try.sh && bash ./containup-try.sh 
 ```
 
 🔥 Ready in 10s — launches an example of a full n8n stack with PostgreSQL, Traefik, and pgAdmin.
