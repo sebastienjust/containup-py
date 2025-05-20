@@ -62,22 +62,27 @@ containup_run(stack)
 curl -sSL -o containup-try.sh https://raw.githubusercontent.com/sebastienjust/containup-py/main/installer/containup-try.sh && bash ./containup-try.sh 
 ```
 
-🔥 Ready in 10s — launches an example of a full Odoo stack with PostgreSQL, Redis, Traefik, and pgAdmin.
+🔥 Ready in 10s — launches an example of a full n8n stack with PostgreSQL, Traefik, and pgAdmin.
 
 Requires Python >= 3.9 + Docker installed and running on your machine.
 
-Example source: [sample_web_stack.py](https://github.com/sebastienjust/containup-py/blob/main/samples/sample_web_stack.py)
+Example source: [sample_n8n.py](https://github.com/sebastienjust/containup-py/blob/main/samples/sample_n8n.py)
 
 This stack includes:
-- Odoo 16, PostgreSQL, Redis, pgAdmin, Traefik
-- Real environment variables and mounts
-- Read-only paths and dry-run warnings
+
+- n8n, PostgreSQL, pgAdmin, Traefik
+- Environment-aware logic (dev/staging/prod) without duplicating files
+- Centralized routing logic: one function handles all service domains
+- Dynamic DNS configuration per environment
+- Conditional service inclusion (e.g. pgAdmin only in dev)
+- Secret handling and runtime checks
+- Human-readable dry-run preview before launching anything
 
 What you will see (condensed):
 
 ```
 📦 Volumes: pgdata 🟢 created
-🚀 Containers: postgres, redis, odoo, pgadmin, traefik
+🚀 Containers: postgres, n8n, pgadmin, traefik
 ❌ Warning: bind mount on /etc/postgresql is read-write
 ```
 
@@ -278,71 +283,79 @@ It prints a clean, readable preview of what the stack will create:
 > The following example can be run immediately if you "git clone" this project (see instructions for checkout below): 
 
 ```text
-$ python3 samples/sample_web_stack.py up --dry-run
+$ python3 samples/sample_n8n.py up --dry-run
 
-🧱 Stack: odoo-stack (dry-run) up 
+🧱 Stack: n8n-stack (dry-run) up 
 
 📦 Volumes
-  - pgdata       : 🟢 created   
-  - odoo_data    : 🟢 created   
+  - pg_data      : 🟢 created   
+  - n8n_data     : 🟢 created   
   - pgadmin_data : 🟢 created   
 
 🔗 Networks
-  - frontend     : 🟢 created  
-  - backend      : 🟢 created  
+  - n8n          : 🟢 created  
 
 🚀 Containers
 
-1. postgres (image: postgres:15)
-   Network    : backend
-   Ports      : 5432/tcp
-   Volumes    : /var/lib/postgresql/data → (volume) pgdata (read-write) 
-   Environment: POSTGRES_DB=postgres 
-                POSTGRES_USER=odoo 
-                POSTGRES_PASSWORD=<Secret: postgres password> 
-   Healthcheck: {'pg_isready -U odoo'}
+1. postgres (image: postgres:17.5)
+    Network    : n8n
+    Network    : 5432/tcp
+    Mounts     : /var/lib/postgresql/data → (volume) pg_data (read-write)
+    Environment: POSTGRES_USER=n8n
+                 POSTGRES_PASSWORD=<Secret: postgres password>
+                 POSTGRES_DB=n8n
+    Healthcheck: (shell) pg_isready -U n8n
 
-2. redis (image: redis:7)
-   Network    : backend
-   Ports      : 6379/tcp
-   Healthcheck: 🛈 no healthcheck
+2. n8n (image: docker.n8n.io/n8nio/n8n:1.93.0)
+    Network    : n8n
+    Network    : 5678:5678/tcp
+    Mounts     : /home/node/.n8n → (volume) n8n_data (read-write)
+    Environment: DB_TYPE=postgresdb
+                 DB_POSTGRESDB_HOST=postgres
+                 DB_POSTGRESDB_PORT=5432
+                 DB_POSTGRESDB_DATABASE=n8n
+                 DB_POSTGRESDB_USER=n8n
+                 DB_POSTGRESDB_PASSWORD=<Secret: db_password>
+                 GENERIC_TIMEZONE=Europe/Paris
+                 TZ=Europe/Paris
+                 N8N_LOG_LEVEL=debug
+                 N8N_SECURE_COOKIE=false
+                 N8N_PROXY_HOPS=1
+    Depends on : postgres
+    Healthcheck: 🛈  no healthcheck
+    Labels     : traefik.http.routers.n8n.rule=Host(`n8n.docker.local`)
+                 traefik.enable=true
 
-3. odoo (image: odoo:16)
-   Network    : backend
-   Ports      : 8069:8069/tcp
-   Volumes    : /var/lib/odoo → (volume) odoo_data (read-write) 
-                /var/logs/odo → (bind) /opt/tmp/logs read-only 
-   Environment: HOST=0.0.0.0 
-                PORT=8069 
-                USER=odoo 
-                PASSWORD=defaultpass ❌ PASSWORD looks like a secret but is passed as plaintext — use containup.secret() to redact it safely
-                PGHOST=postgres 
-                PGUSER=odoo 
-                PGPASSWORD=defaultpass ❌ PGPASSWORD looks like a secret but is passed as plaintext — use containup.secret() to redact it safely
-   Healthcheck: 🛈 no healthcheck
+3. pgadmin (image: dpage/pgadmin4 ❌  image has no explicit tag (defaults to :latest))
+    Network    : n8n
+    Network    : 5050:80/tcp
+    Mounts     : /var/lib/pgadmin → (volume) pgadmin_data (read-write)
+    Environment: PGADMIN_DEFAULT_EMAIL=admin@example.com
+                 PGADMIN_DEFAULT_PASSWORD=<Secret: PGADMIN_DEFAULT_PASSWORD>
+    Healthcheck: 🛈  no healthcheck
+    Labels     : traefik.http.routers.pgadmin.rule=Host(`pgadmin.docker.local`)
+                 traefik.enable=true
 
-4. pgadmin (image: dpage/pgadmin4 ❌  image has no explicit tag (defaults to :latest))
-   Network    : frontend
-   Ports      : 5050:80/tcp
-   Volumes    : /var/lib/pgadmin → (volume) pgadmin_data (read-write) 
-                /etc/postgresql → (bind) /etc/postgresql (read-write) ❌  sensitive host path, ⚠️  default to read-write, make it explicit
-   Environment: PGADMIN_DEFAULT_EMAIL=admin@example.com 
-                PGADMIN_DEFAULT_PASSWORD=defaultpass ❌ PGADMIN_DEFAULT_PASSWORD looks like a secret but is passed as plaintext — use containup.secret() to redact it safely
-   Healthcheck: 🛈 no healthcheck
+4. traefik (image: traefik:v3.4)
+    Network    : n8n
+    Network    : 80:80/tcp, 8080:8080/tcp
+    Mounts     : /var/run/docker.sock → (bind) /var/run/docker.sock (read-write)
+                     ❌  sensitive host path
+                     ⚠️  default to read-write, make it explicit
+    Commands   : --api.insecure=true --providers.docker=true --entrypoints.web.address=:80 --providers.docker.exposedbydefault=false
+    Healthcheck: 🛈  no healthcheck
 
-5. traefik (image: traefik:v2.10)
-   Network    : frontend
-   Ports      : 80:80/tcp, 8081:8080/tcp
-   Healthcheck: 🛈 no healthcheck
-   Commands   : --api.insecure=true
-                --providers.docker=true
-                --entrypoints.web.address=:80
-
-
+5. traefik-whoami (image: traefik/whoami ❌  image has no explicit tag (defaults to :latest))
+    Network    : n8n
+    Depends on : traefik
+                     ⚠️  traefik has no healthcheck
+    Healthcheck: 🛈  no healthcheck
+    Labels     : traefik.http.routers.whoami.rule=Host(`whoami.docker.local`)
+                 traefik.enable=true
 ```
 
 > [!TIP]
-> Secrets, when declared with `secret()`, are reacted in reports, logs and exceptions. 
+> Secrets, when declared with `secret()`, are reacted in reports, logs, and exceptions. 
 
 #### What is this useful for?
 
