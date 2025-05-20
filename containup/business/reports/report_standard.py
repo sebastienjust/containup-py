@@ -38,8 +38,8 @@ def report_standard(
         f"🧱 Stack: {stack.name} (dry-run) {config.command} {services_annotated}\n"
     )
 
-    volumes = [v for _, v in stack.mounts.items()]
-    networks = [v for _, v in stack.networks.items()]
+    volumes = stack.mounts
+    networks = stack.networks
 
     max_key_len_volumes = max((len(n.name) for n in volumes), default=0)
     max_key_len_networks = max((len(n.name) for n in networks), default=0)

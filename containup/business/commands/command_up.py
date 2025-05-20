@@ -41,9 +41,8 @@ class CommandUp:
                 else:
                     logger.info(f"Container {container_name} doesn't exist")
 
-
             for service in services:
-                
+
                 container_name = service.container_name or service.name
                 logger.info(f"Run container {container_name} : start")
                 self.operator.container_run(service)
@@ -61,7 +60,7 @@ class CommandUp:
             self._system_interactions.exit_with_error(1)
 
     def _ensure_volumes(self):
-        for vol in self.stack.mounts.values():
+        for vol in self.stack.mounts:
             logger.debug(f"Volume {vol.name}: checking if exists")
             if not self.operator.volume_exists(vol.name):
                 logger.debug(f"Volume {vol.name}: create volume")
@@ -71,7 +70,7 @@ class CommandUp:
                 logger.debug(f"Volume {vol.name}: already exists")
 
     def _ensure_networks(self):
-        for net in self.stack.networks.values():
+        for net in self.stack.networks:
             logger.debug(f"Network {net.name}: checking if exists")
             if not self.operator.network_exists(net.name):
                 logger.debug(f"Network {net.name}: create network")
@@ -107,7 +106,6 @@ class CommandUp:
             f"Wait container {container_name} plan. Interval: {interval} timeout: {timeout} retries: {retries}"
         )
 
-        
         while self._system_interactions.time() < deadline and attempt < max_attempts:
             state = self.operator.container_health_status(container_name)
             health = state.health

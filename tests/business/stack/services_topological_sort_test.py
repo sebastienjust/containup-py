@@ -1,6 +1,5 @@
 import pytest
 
-
 from containup.stack.stack import (
     Service,
     services_topological_sort,
