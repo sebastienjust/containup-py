@@ -5,7 +5,13 @@ All notable changes to this project will be documented in this file.
 This project follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 and uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [0.1.9] - unreleased
+## [0.1.10] - unreleased
+
+### Changed
+
+- Changed odoo example to n8n example to be able to demonstrate more things.
+
+## [0.1.9] - 2025-05-19
 
 ### Added
 
