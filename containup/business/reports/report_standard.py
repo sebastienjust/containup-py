@@ -38,8 +38,8 @@ def report_standard(
         f"🧱 Stack: {stack.name} (dry-run) {config.command} {services_annotated}\n"
     )
 
-    volumes = [v for _, v in stack.mounts.items()]
-    networks = [v for _, v in stack.networks.items()]
+    volumes = stack.mounts
+    networks = stack.networks
 
     max_key_len_volumes = max((len(n.name) for n in volumes), default=0)
     max_key_len_networks = max((len(n.name) for n in networks), default=0)
@@ -117,7 +117,7 @@ class ContainerItemNames:
     def __init__(self):
         self.max_length = self._container_item_names_max_length()
         key_empty = ""
-        self.key_empty_formatted = f"   {key_empty:<{self.max_length}} "
+        self.key_empty_formatted = f"    {key_empty:<{self.max_length}} "
         pass
 
     def _container_item_names_max_length(self):

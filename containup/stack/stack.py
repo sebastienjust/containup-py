@@ -15,8 +15,8 @@ class Stack:
     def __init__(self, name: str):
         self.name = name
 
-        self.mounts: dict[str, Volume] = {}
-        self.networks: dict[str, Network] = {}
+        self.mounts: list[Volume] = []
+        self.networks: list[Network] = []
         self.services: list[Service] = []
 
     def add(self, item_or_list: Union[StockItem, List[StockItem]]):
@@ -26,9 +26,9 @@ class Stack:
             if isinstance(item, Service):
                 self.services.append(item)
             elif isinstance(item, Volume):
-                self.mounts[item.name] = item
+                self.mounts.append(item)
             elif isinstance(item, Network):  # type: ignore
-                self.networks[item.name] = item
+                self.networks.append(item)
         return self
 
     def get_services_sorted(
@@ -46,15 +46,18 @@ class Stack:
         """
         # if filter_services is empty or None then ignore it
         # otherwise filter services to run to match filter_services (only the services the user wants to run)
+        sorted_services = services_topological_sort(self.services)
         targets: list[Service] = (
-            self.services
+            sorted_services
             if not filter_services
             else [
-                service for service in self.services if service.name in filter_services
+                service
+                for service in sorted_services
+                if service.name in filter_services
             ]
         )
-        sorted_services = services_topological_sort(targets)
-        return sorted_services
+
+        return targets
 
 
 def services_topological_sort(services: list[Service]) -> list[Service]:

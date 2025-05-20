@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
 
 from containup import Volume, Network, Service
+from containup.business.commands.container_health_status import ContainerHealthStatus
 
 
 class ContainerOperator(ABC):
@@ -20,11 +21,8 @@ class ContainerOperator(ABC):
         pass
 
     @abstractmethod
-    def container_wait_healthy(self, service: Service):
-        """
-        Waits for container to be healthy.
-        Raises exception if not healty or if dead.
-        """
+    def container_health_status(self, container_name: str) -> ContainerHealthStatus:
+        """Returns status and health of container"""
         pass
 
     @abstractmethod

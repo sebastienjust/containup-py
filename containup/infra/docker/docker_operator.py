@@ -1,37 +1,36 @@
-from typing import Optional
+import logging
 
 import docker
 import docker.models
 import docker.models.networks
 import docker.models.volumes
-
 from docker.errors import DockerException
 from docker.models.containers import Container
 
-from containup import NoneHealthcheck, HealthcheckOptions
-from containup.stack.volume import Volume
-from containup.stack.network import Network
-from containup.stack.stack import Service
-from containup.utils.duration_to_nano import duration_to_seconds
-from containup.utils.secret_value import SecretValue
-from containup.commands.container_operator import (
+from containup.business.commands.container_health_status import ContainerHealthStatus
+from containup.business.commands.container_operator import (
     ContainerOperator,
     ContainerOperatorException,
 )
+from containup.business.commands.user_interactions import UserInteractions
 from containup.infra.docker.healthcheck import healthcheck_to_docker_spec_unsafe
 from containup.infra.docker.mounts import mounts_to_docker_specs
 from containup.infra.docker.ports import ports_to_docker_spec
-import time
-
-import logging
+from containup.stack.network import Network
+from containup.stack.stack import Service
+from containup.stack.volume import Volume
+from containup.utils.secret_value import SecretValue
 
 logger = logging.getLogger(__name__)
 
 
 class DockerOperator(ContainerOperator):
 
-    def __init__(self, client: docker.DockerClient):
+    def __init__(
+        self, client: docker.DockerClient, system_interactions: UserInteractions
+    ):
         self.client = client
+        self._system_interactions = system_interactions
 
     def container_exists(self, container_name: str) -> bool:
         """Asks docker if the container exists"""
@@ -86,61 +85,13 @@ class DockerOperator(ContainerOperator):
                 f"Failed to run container {container_name} : {e}"
             ) from e
 
-    def container_wait_healthy(self, service: Service) -> None:
-        healthcheck = service.healthcheck
-        if healthcheck is None or isinstance(healthcheck, NoneHealthcheck):
-            return
-        options = getattr(service.healthcheck, "options", None)
-        opts: HealthcheckOptions = options or HealthcheckOptions()
-        interval: float = duration_to_seconds(opts.interval or "1s")
-        timeout: float = duration_to_seconds(opts.timeout or "30s")
-        retries: int = opts.retries or 3
-        start_period: float = duration_to_seconds(opts.start_period or "1s")
-        start_interval: float = duration_to_seconds(opts.start_interval or "1s")
-        max_attempts: int = retries + 1
-
-        deadline: float = (
-            time.time() + timeout * retries * interval + start_period + start_interval
-        )
-        attempt: int = 0
-
-        container_name = service.container_name_safe()
-
-        logger.info(
-            f"Wait container {container_name} plan. Interval: {interval} timeout: {timeout} retries: {retries}"
-        )
-
-        try:
-            container: Container = self.client.containers.get(container_name)
-            while time.time() < deadline and attempt < max_attempts:
-                container.reload()
-                state: dict[str, str] = container.attrs.get("State", {})
-                health: Optional[str] = state.get("Health", {}).get("Status")  # type: ignore
-                status: Optional[str] = state.get("Status")  # type: ignore
-                logger.info(
-                    f"Wait container {container_name} attempts: {attempt}/{max_attempts} status: {status} health: {health}"
-                )
-                if status == "exited":
-                    raise ContainerOperatorException(
-                        f"Container {container_name} exited before becoming healthy."
-                    )
-
-                if health == "healthy":
-                    return
-
-                if health == "unhealthy":
-                    attempt += 1
-
-                time.sleep(interval)
-
-            raise ContainerOperatorException(
-                f"Container {container_name} did not become healthy in time."
-            )
-
-        except DockerException as e:
-            raise ContainerOperatorException(
-                f"Failed to get health status for container {container_name}: {e}"
-            ) from e
+    def container_health_status(self, container_name: str) -> ContainerHealthStatus:
+        container: Container = self.client.containers.get(container_name)
+        container.reload()
+        state: dict[str, str] = container.attrs.get("State", {})
+        health: str = str(state.get("Health", {}).get("Status") or "unknown")  # type: ignore
+        status: str = str(state.get("Status") or "unknown")  # type: ignore
+        return ContainerHealthStatus(status, health)
 
     def volume_exists(self, volume_name: str) -> bool:
         """Asks docker if the volume exists"""

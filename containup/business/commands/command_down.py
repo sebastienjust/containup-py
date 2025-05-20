@@ -1,7 +1,7 @@
 import logging
 from typing import Optional
 
-from containup.commands.container_operator import (
+from containup.business.commands.container_operator import (
     ContainerOperator,
     ContainerOperatorException,
 )
