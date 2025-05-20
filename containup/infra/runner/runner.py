@@ -8,8 +8,8 @@ from containup.business.execution_listener import ExecutionListenerStd
 from containup.business.plugins.plugin_builtins import PluginBuiltins
 from containup.business.plugins.plugin_registry import PluginRegistry, register
 from containup.business.reports.report_generator import ReportGenerator
-from containup.commands.command_down import CommandDown
-from containup.commands.command_up import CommandUp
+from containup.business.commands.command_down import CommandDown
+from containup.business.commands.command_up import CommandUp
 from containup.infra.docker.docker_operator import DockerOperator
 from containup.infra.dryrun.dryrun_operator import DryRunOperator
 from containup.infra.user_interactions_cli import UserInteractionsCLI

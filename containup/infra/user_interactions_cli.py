@@ -1,4 +1,4 @@
-from containup.commands.user_interactions import UserInteractions
+from containup.business.commands.user_interactions import UserInteractions
 import sys
 
 

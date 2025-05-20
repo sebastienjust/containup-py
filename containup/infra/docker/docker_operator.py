@@ -14,7 +14,7 @@ from containup.stack.network import Network
 from containup.stack.stack import Service
 from containup.utils.duration_to_nano import duration_to_seconds
 from containup.utils.secret_value import SecretValue
-from containup.commands.container_operator import (
+from containup.business.commands.container_operator import (
     ContainerOperator,
     ContainerOperatorException,
 )

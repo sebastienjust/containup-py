@@ -12,7 +12,7 @@ from containup.business.execution_listener import (
     ExecutionEvtNetworkCreated,
     ExecutionEvtNetworkExistsCheck,
 )
-from containup.commands.container_operator import (
+from containup.business.commands.container_operator import (
     ContainerOperator,
     ContainerOperatorException,
 )

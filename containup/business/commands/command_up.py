@@ -2,11 +2,11 @@ import logging
 from typing import List, Optional
 
 from containup import NoneHealthcheck
-from containup.commands.container_operator import (
+from containup.business.commands.container_operator import (
     ContainerOperator,
     ContainerOperatorException,
 )
-from containup.commands.user_interactions import UserInteractions
+from containup.business.commands.user_interactions import UserInteractions
 from containup.stack.stack import Stack
 
 logger = logging.getLogger(__name__)
