@@ -16,26 +16,31 @@ def test_networks():
     stack = create_n8n_stack()
     assert any(n.name == "n8n" for n in stack.networks)
 
+
 def test_mounts():
     stack = create_n8n_stack()
     assert any(n.name == "pg_data" for n in stack.mounts)
     assert any(n.name == "n8n_data" for n in stack.mounts)
     assert any(n.name == "pgadmin_data" for n in stack.mounts)
 
+
 def test_services():
     stack = create_n8n_stack()
-    service = next( obj for obj in stack.services if obj.name == "n8n")
+    service = next(obj for obj in stack.services if obj.name == "n8n")
     assert service
+
 
 def test_services_ordered():
     sorted = create_n8n_stack().get_services_sorted()
     names = [s.name for s in sorted]
-    assert names == [ "postgres", "n8n", "pgadmin", "traefik", "traefik-whoami" ]
+    assert names == ["postgres", "n8n", "pgadmin", "traefik", "traefik-whoami"]
+
 
 def test_services_ordered_filtered():
     sorted = create_n8n_stack().get_services_sorted(["traefik-whoami", "n8n"])
     names = [s.name for s in sorted]
-    assert names == [ "n8n", "traefik-whoami" ]
+    assert names == ["n8n", "traefik-whoami"]
+
 
 def create_n8n_stack():
     stack = Stack("n8n-stack")
@@ -141,5 +146,5 @@ def create_n8n_stack():
             network="n8n",
         )
     )
-    
-    return stack 
+
+    return stack
