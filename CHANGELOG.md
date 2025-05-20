@@ -10,6 +10,7 @@ and uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ### Changed
 
 - Changed odoo example to n8n example to be able to demonstrate more things.
+- Move containup-try.sh in samples/
 
 ## [0.1.9] - 2025-05-19
 
