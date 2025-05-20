@@ -5,12 +5,12 @@ import os
 
 from containup import ( Stack, Service, Volume, Network, containup_run, VolumeMount, port, BindMount, secret, CmdShellHealthcheck, HealthcheckOptions )
 
-# Sample script to demonstrate a how to build a stack with Odoo
+# Sample script to demonstrate a how to build a stack with n8n
 #
 # The requirements:
 # -----------------
 #
-# The stack is composed of: postgresql + pgadmin + traefik + traefik whoami + odoo.
+# The stack is composed of : postgresql + pgadmin + traefik + traefik whoami + n8n.
 #
 # This example will manage a development, staging and production environment.
 # - in development environments we want all the containers
@@ -48,8 +48,8 @@ from containup import ( Stack, Service, Volume, Network, containup_run, VolumeMo
 # 127.0.0.1 traefik.staging.mycompany.com
 # 127.0.0.1 whoami.mycompany.com
 # 127.0.0.1 whoami.staging.mycompany.com
-# 127.0.0.1 odoo.mycompany.com
-# 127.0.0.1 odoo.staging.mycompany.com
+# 127.0.0.1 n8n.mycompany.com
+# 127.0.0.1 n8n.staging.mycompany.com
 # 127.0.0.1 pgadmin.mycompany.com
 # 127.0.0.1 pgadmin.staging.mycompany.com
 #
@@ -60,19 +60,19 @@ from containup import ( Stack, Service, Volume, Network, containup_run, VolumeMo
 # - open http://localhost:8080 -> you have traefik admin console
 # - open http://localhost/whoami -> you have traefik whoami
 # - open http://localhost/pgadmin -> you have pgadmin
-# - open http://localhost/odoo -> you have odoo
+# - open http://localhost/n8n -> you have n8n
 #
 # Testing the staging mode (APP_ENV=staging)
 # - http://traefik.staging.mycompany.com:8080 -> you have nothing (as expected)
 # - http://whoami.staging.mycompany.com -> you have nothing (as expected)
 # - http://pgadmin.staging.mycompany.com -> you have nothing (as expected)
-# - http://odoo.staging.mycompany.com -> you have odoo
+# - http://n8n.staging.mycompany.com -> you have n8n
 #
 # Testing the prod mode (APP_ENV=staging)
 # - http://traefik.mycompany.com:8080 -> you have nothing (as expected)
 # - http://whoami.mycompany.com -> you have nothing (as expected)
 # - http://pgadmin.mycompany.com -> you have nothing (as expected)
-# - http://odoo.mycompany.com -> you have odoo
+# - http://n8n.mycompany.com -> you have n8n
 
 
 # Fetch configuration
@@ -82,8 +82,9 @@ from containup import ( Stack, Service, Volume, Network, containup_run, VolumeMo
 app_env = os.environ.get("APP_ENV", "dev")
 
 # users and passwords
-db_user = os.environ.get("DB_USER", "odoo")
-db_password = os.environ.get("DB_PASSWORD", "odoo")
+dn_name = "n8n"
+db_user = os.environ.get("DB_USER", "n8n")
+db_password = os.environ.get("DB_PASSWORD", "n8n")
 pgadmin_password = os.environ.get("PGADMIN_PASSWORD", "defaultpass")
 
 # Define the routing logic
@@ -91,40 +92,32 @@ pgadmin_password = os.environ.get("PGADMIN_PASSWORD", "defaultpass")
 # Select routing method depending on environment.
 # Because it's code, can create functions to avoid complex configuration
 
-def routing(service: str, strip: bool = True) -> dict[str, str] :
-
-    if app_env == "dev":
-        config = {
-            f"traefik.http.routers.{service}.rule" : f"PathPrefix(`/{service}`)",
-        }
-        # if strip:
-        #     config.update(
-        #         {
-        #             f"traefik.http.routers.{service}.middlewares" : f"{service}-stripprefix",
-        #             f"traefik.http.middlewares.{service}-stripprefix.stripprefix.prefixes" : f"/{service}",
-        #         }
-        #     )
-        return config
-
-    subdomain = "mycompany.com" if app_env == "prod" else "staging.mycompany.com"
+domain_name = (
+    os.environ.get("DEPLOYMENT_DOMAIN_NAME") if os.environ.get("DEPLOYMENT_DOMAIN_NAME") else
+    "docker.localhost" if app_env == "dev" else
+    "staging.mycompany.com" if app_env == "staging" else
+    "mycompany.com"
+)
+def routing(service: str) -> dict[str, str] :
     return {
-        "traefik.http.routers.{service}.rule" : f"Host(`{service}.{subdomain}`)"
+        f"traefik.http.routers.{service}.rule" : f"Host(`{service}.{domain_name}`)",
+        "traefik.enable": "true"
     }
 
 # Create the stack
 # ----------------
 
-stack = Stack("odoo-stack")
+stack = Stack("n8n-stack")
 
 # Networks
 stack.add([
-    Network("odoo")
+    Network("n8n")
 ])
 
 # Persistent volumes
 stack.add([
     Volume("pg_data"),
-    Volume("odoo_data"),
+    Volume("n8n_data"),
     Volume("pgadmin_data"),
 ])
 
@@ -136,36 +129,45 @@ stack.add(
         environment={
             "POSTGRES_USER": db_user,
             "POSTGRES_PASSWORD": secret("postgres password", db_password),
-            "POSTGRES_DB": "postgres",
+            "POSTGRES_DB": dn_name,
         },
-        volumes=[VolumeMount("pg_data", "/var/lib/postgresql/data")],
-        network="odoo",
+        volumes=[
+            VolumeMount("pg_data", "/var/lib/postgresql/data"),
+        ],
+        network="n8n",
         ports=[port(container_port=5432)],
         healthcheck=CmdShellHealthcheck(
-            "pg_isready -U odoo",
+            "pg_isready -U n8n",
             HealthcheckOptions(interval="5s", timeout="3s", retries=5),
         ),
     )
 )
 
-# Odoo (ERP)
+# n8n
 stack.add(
     Service(
-        name="odoo",
-        image="odoo:18",
+        name="n8n",
+        image="docker.n8n.io/n8nio/n8n:1.93.0",
         depends_on=["postgres"],
         environment={
-            "HOST": "postgres",
-            "PORT": "5432",
-            "USER": db_user,
-            "PASSWORD": secret("db_password", db_password),
+            "DB_TYPE": "postgresdb",
+            "DB_POSTGRESDB_HOST": "postgres",
+            "DB_POSTGRESDB_PORT": "5432",
+            "DB_POSTGRESDB_DATABASE": dn_name,
+            "DB_POSTGRESDB_USER": db_user,
+            "DB_POSTGRESDB_PASSWORD": secret("db_password", db_password),
+            "GENERIC_TIMEZONE": "Europe/Paris",
+            "TZ": "Europe/Paris",
+            "N8N_LOG_LEVEL": "debug",
+            "N8N_SECURE_COOKIE": "false",
+            "N8N_PROXY_HOPS": "1",
         },
         volumes=[
-            VolumeMount("odoo_data", "/var/lib/odoo"),
+            VolumeMount("n8n_data", "/home/node/.n8n"),
         ],
-        network="odoo",
-        ports=[port(container_port=8069, host_port=8069)],
-        labels=routing("odoo", strip = False),
+        network="n8n",
+        ports=[port(container_port=5678, host_port=5678)],
+        labels=routing("n8n"),
     )
 )
 
@@ -183,15 +185,12 @@ if app_env == "dev":
                 "PGADMIN_DEFAULT_EMAIL": "admin@example.com",
                 "PGADMIN_DEFAULT_PASSWORD": secret(
                     "PGADMIN_DEFAULT_PASSWORD", pgadmin_password
-                ),
-                # Necessary for pgadmin when used in a subdirectory
-                # That happens in dev environments only
-                "SCRIPT_NAME": "/pgadmin" if app_env == "dev" else "/"
+                )
             },
             volumes=[
                 VolumeMount("pgadmin_data", "/var/lib/pgadmin"),
             ],
-            network="odoo",
+            network="n8n",
             ports=[port(container_port=80, host_port=5050)],
             labels=routing("pgadmin"),
         )
@@ -209,7 +208,8 @@ stack.add(
             "--api.insecure=true" if app_env == "dev" else "",
             "--providers.docker=true",
             "--entrypoints.web.address=:80",
-            "--providers.docker.exposedbydefault=true",
+            # Only containers with traefik.enable shall be exposed
+            "--providers.docker.exposedbydefault=false",
         ],
         ports=[
             # The HTTP port
@@ -218,7 +218,7 @@ stack.add(
             port(8080, 8080),
         ],
         volumes=[BindMount("/var/run/docker.sock", "/var/run/docker.sock")],
-        network="odoo",
+        network="n8n",
     )
 )
 
@@ -231,7 +231,7 @@ if app_env == "dev":
             name="traefik-whoami",
             image="traefik/whoami",
             depends_on=["traefik"],
-            network="odoo",
+            network="n8n",
             labels=routing("whoami"),
         )
     )

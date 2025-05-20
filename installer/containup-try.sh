@@ -76,8 +76,8 @@ response=${response:-$default_sample}
 if [[ "$response" =~ ^[Yy]$ ]]; then
   echo "Proceeding..."
   echo "----------------------------------------"
-  echo "✅ Example stack (from samples/sample_odoo.py)"
-  curl -sSL -o containup_stack.py https://raw.githubusercontent.com/sebastienjust/containup-py/main/samples/sample_odoo.py
+  echo "✅ Example stack (from samples/sample_n8n.py)"
+  curl -sSL -o containup_stack.py https://raw.githubusercontent.com/sebastienjust/containup-py/main/samples/sample_n8n.py
   echo "   This is the output of : python3 containup_stack.py up --dry-run"
   echo "----------------------------------------"
   python3 containup_stack.py up --dry-run
