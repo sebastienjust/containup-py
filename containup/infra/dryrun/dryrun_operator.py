@@ -2,6 +2,11 @@ from dataclasses import dataclass
 from typing import Dict
 
 from containup import Service, Volume, Network
+from containup.business.commands.container_health_status import ContainerHealthStatus
+from containup.business.commands.container_operator import (
+    ContainerOperator,
+    ContainerOperatorException,
+)
 from containup.business.execution_listener import (
     ExecutionListener,
     ExecutionEvtContainerExistsCheck,
@@ -11,10 +16,6 @@ from containup.business.execution_listener import (
     ExecutionEvtVolumeCreated,
     ExecutionEvtNetworkCreated,
     ExecutionEvtNetworkExistsCheck,
-)
-from containup.business.commands.container_operator import (
-    ContainerOperator,
-    ContainerOperatorException,
 )
 
 
@@ -46,8 +47,8 @@ class DryRunOperator(ContainerOperator):
         self._containers[container_id] = DryRunContainer(container_id, service)
         self._auditor.record(ExecutionEvtContainerRun(container_id, service))
 
-    def container_wait_healthy(self, service: Service):
-        return
+    def container_health_status(self, container_name: str) -> ContainerHealthStatus:
+        return ContainerHealthStatus("running", "healthy")
 
     def volume_exists(self, volume_name: str) -> bool:
         result = volume_name in self._volumes

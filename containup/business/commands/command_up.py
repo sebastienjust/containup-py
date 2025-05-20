@@ -7,7 +7,10 @@ from containup.business.commands.container_operator import (
     ContainerOperatorException,
 )
 from containup.business.commands.user_interactions import UserInteractions
+from containup.stack.service import Service
+from containup.stack.service_healthcheck import HealthcheckOptions
 from containup.stack.stack import Stack
+from containup.utils.duration_to_nano import duration_to_seconds
 
 logger = logging.getLogger(__name__)
 
@@ -17,11 +20,11 @@ class CommandUp:
         self,
         stack: Stack,
         operator: ContainerOperator,
-        user_interactions: UserInteractions,
+        system_interactions: UserInteractions,
     ):
         self.stack = stack
         self.operator = operator
-        self.user_interactions = user_interactions
+        self._system_interactions = system_interactions
 
     def up(self, filter_services: Optional[List[str]] = None) -> None:
         try:
@@ -45,12 +48,12 @@ class CommandUp:
                     logger.info(
                         f"Run container {container_name} : wait for healthcheck"
                     )
-                    self.operator.container_wait_healthy(service)
+                    self._container_wait_healthy(service)
                 logger.info(f"Run container {container_name} : start done")
 
         except ContainerOperatorException as e:
             logger.error(f"Command up failed: {e}")
-            self.user_interactions.exit_with_error(1)
+            self._system_interactions.exit_with_error(1)
 
     def _ensure_volumes(self):
         for vol in self.stack.mounts.values():
@@ -71,3 +74,54 @@ class CommandUp:
                 logger.debug(f"Network {net.name}: network created")
             else:
                 logger.debug(f"Network {net.name}: already exists")
+
+    def _container_wait_healthy(self, service: Service) -> None:
+        healthcheck = service.healthcheck
+        if healthcheck is None or isinstance(healthcheck, NoneHealthcheck):
+            return
+        options = getattr(service.healthcheck, "options", None)
+        opts: HealthcheckOptions = options or HealthcheckOptions()
+        interval: float = duration_to_seconds(opts.interval or "1s")
+        timeout: float = duration_to_seconds(opts.timeout or "30s")
+        retries: int = opts.retries or 3
+        start_period: float = duration_to_seconds(opts.start_period or "1s")
+        start_interval: float = duration_to_seconds(opts.start_interval or "1s")
+        max_attempts: int = retries + 1
+
+        deadline: float = (
+            self._system_interactions.time()
+            + timeout * retries * interval
+            + start_period
+            + start_interval
+        )
+        attempt: int = 0
+
+        container_name = service.container_name_safe()
+
+        logger.info(
+            f"Wait container {container_name} plan. Interval: {interval} timeout: {timeout} retries: {retries}"
+        )
+
+        state = self.operator.container_health_status(container_name)
+        while self._system_interactions.time() < deadline and attempt < max_attempts:
+            health = state.health
+            status = state.status
+            logger.info(
+                f"Wait container {container_name} attempts: {attempt}/{max_attempts} status: {status} health: {health}"
+            )
+            if status == "exited":
+                raise ContainerOperatorException(
+                    f"Container {container_name} exited before becoming healthy."
+                )
+
+            if health == "healthy":
+                return
+
+            if health == "unhealthy":
+                attempt += 1
+
+            self._system_interactions.sleep(interval)
+
+        raise ContainerOperatorException(
+            f"Container {container_name} did not become healthy in time."
+        )

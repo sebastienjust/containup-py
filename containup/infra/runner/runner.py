@@ -35,18 +35,18 @@ class StackRunner:
         self._plugin_registry = PluginRegistry()
         self._audit_registry = AuditRegistry(self._plugin_registry)
         self._report_generator = ReportGenerator()
+        self.system_interactions = UserInteractionsCLI()
         self.operator = (
             DryRunOperator(self._execution_listener)
             if self.config.dry_run
-            else DockerOperator(self.client)
+            else DockerOperator(self.client, self.system_interactions)
         )
-        self.user_interactions = UserInteractionsCLI()
 
     # Handle command line parsing and launches the commands on the stack
     def run(self):
         alerts = self._audit_registry.inspect(self.stack)
         if self.config.command == "up":
-            CommandUp(self.stack, self.operator, self.user_interactions).up(
+            CommandUp(self.stack, self.operator, self.system_interactions).up(
                 self.config.services
             )
         elif self.config.command == "down":

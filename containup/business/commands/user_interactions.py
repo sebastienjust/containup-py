@@ -11,3 +11,11 @@ class UserInteractions(ABC):
     @abstractmethod
     def exit_with_error(self, error_code: int):
         pass
+
+    @abstractmethod
+    def time(self) -> float:
+        pass
+
+    @abstractmethod
+    def sleep(self, seconds: float) -> None:
+        pass

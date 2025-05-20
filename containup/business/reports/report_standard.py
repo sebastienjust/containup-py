@@ -117,7 +117,7 @@ class ContainerItemNames:
     def __init__(self):
         self.max_length = self._container_item_names_max_length()
         key_empty = ""
-        self.key_empty_formatted = f"   {key_empty:<{self.max_length}} "
+        self.key_empty_formatted = f"    {key_empty:<{self.max_length}} "
         pass
 
     def _container_item_names_max_length(self):
