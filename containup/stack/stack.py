@@ -46,15 +46,16 @@ class Stack:
         """
         # if filter_services is empty or None then ignore it
         # otherwise filter services to run to match filter_services (only the services the user wants to run)
+        sorted_services = services_topological_sort(self.services)
         targets: list[Service] = (
-            self.services
+            sorted_services
             if not filter_services
             else [
-                service for service in self.services if service.name in filter_services
+                service for service in sorted_services if service.name in filter_services
             ]
         )
-        sorted_services = services_topological_sort(targets)
-        return sorted_services
+        
+        return targets
 
 
 def services_topological_sort(services: list[Service]) -> list[Service]:
