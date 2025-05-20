@@ -1,4 +1,6 @@
+
 import logging
+from typing import Optional
 
 import docker
 import docker.models
@@ -53,7 +55,7 @@ class DockerOperator(ContainerOperator):
                 f"Failed to remove container {container_name}: {e}"
             ) from e
 
-    def container_run(self, service: Service):
+    def container_run(self, stack_name:str, service: Service):
         """Run a container like docker run"""
         container_name = service.container_name or service.name
 
@@ -75,7 +77,7 @@ class DockerOperator(ContainerOperator):
                 ports=ports_to_docker_spec(service.ports),  # type: ignore
                 mounts=mounts_to_docker_specs(service.mounts_all()),
                 network=service.network,
-                labels=service.labels,
+                labels=make_labels(stack_name, service.labels),
                 restart_policy=service.restart,
                 detach=True,
                 healthcheck=healthcheck_to_docker_spec_unsafe(service.healthcheck),
@@ -98,13 +100,13 @@ class DockerOperator(ContainerOperator):
         docker_volumes: list[docker.models.volumes.Volume] = self.client.volumes.list()  # type: ignore
         return any(v.name == volume_name for v in docker_volumes)
 
-    def volume_create(self, volume: Volume) -> None:
+    def volume_create(self, stack_name: str, volume: Volume) -> None:
         """Creates the volume"""
         self.client.volumes.create(  # type: ignore
             name=volume.name,
             driver=volume.driver,
             driver_opts=volume.driver_opts,
-            labels=volume.labels,
+            labels = make_labels(stack_name, volume.labels),
         )
 
     def network_exists(self, network_name: str) -> bool:
@@ -112,8 +114,19 @@ class DockerOperator(ContainerOperator):
         docker_networks: list[docker.models.networks.Network] = self.client.networks.list()  # type: ignore
         return any(net.name == network_name for net in docker_networks)
 
-    def network_create(self, network: Network) -> None:
+    def network_create(self, stack_name: str, network: Network) -> None:
         """Creates the network"""
         self.client.networks.create(
-            name=network.name, driver=network.driver, options=network.options
+            name=network.name, 
+            driver=network.driver, 
+            options=network.options, 
+            labels = make_labels(stack_name, None)
         )
+
+
+def make_labels(stack_name: str, labels: Optional[dict[str, str]]) -> dict[str, str]:
+    return {
+        **(labels or {}),
+        "com.docker.compose.project": stack_name,
+        "containup.stack.name": stack_name
+    }

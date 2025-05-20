@@ -45,7 +45,7 @@ class CommandUp:
 
                 container_name = service.container_name or service.name
                 logger.info(f"Run container {container_name} : start")
-                self.operator.container_run(service)
+                self.operator.container_run(self.stack.name, service)
                 if service.healthcheck and not isinstance(
                     service.healthcheck, NoneHealthcheck
                 ):
@@ -64,7 +64,7 @@ class CommandUp:
             logger.debug(f"Volume {vol.name}: checking if exists")
             if not self.operator.volume_exists(vol.name):
                 logger.debug(f"Volume {vol.name}: create volume")
-                self.operator.volume_create(vol)
+                self.operator.volume_create(self.stack.name, vol)
                 logger.debug(f"Volume {vol.name}: volume created")
             else:
                 logger.debug(f"Volume {vol.name}: already exists")
@@ -74,7 +74,7 @@ class CommandUp:
             logger.debug(f"Network {net.name}: checking if exists")
             if not self.operator.network_exists(net.name):
                 logger.debug(f"Network {net.name}: create network")
-                self.operator.network_create(net)
+                self.operator.network_create(self.stack.name, net)
                 logger.debug(f"Network {net.name}: network created")
             else:
                 logger.debug(f"Network {net.name}: already exists")

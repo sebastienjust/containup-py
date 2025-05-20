@@ -11,7 +11,7 @@ class ContainerOperator(ABC):
         pass
 
     @abstractmethod
-    def container_run(self, service: Service):
+    def container_run(self, stack_name: str, service: Service):
         """Runs the service (ie. associated container)"""
         pass
 
@@ -31,7 +31,7 @@ class ContainerOperator(ABC):
         pass
 
     @abstractmethod
-    def volume_create(self, volume: Volume) -> None:
+    def volume_create(self, stack_name: str, volume: Volume) -> None:
         """Creates the volume"""
         pass
 
@@ -41,7 +41,7 @@ class ContainerOperator(ABC):
         pass
 
     @abstractmethod
-    def network_create(self, network: Network) -> None:
+    def network_create(self, stack_name: str, network: Network) -> None:
         """Creates the network"""
         pass
 
