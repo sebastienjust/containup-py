@@ -31,6 +31,7 @@ class CommandUp:
             self._ensure_volumes()
             self._ensure_networks()
             services = self.stack.get_services_sorted(filter_services)
+
             for service in services:
                 container_name = service.container_name or service.name
 
@@ -40,6 +41,10 @@ class CommandUp:
                 else:
                     logger.info(f"Container {container_name} doesn't exist")
 
+
+            for service in services:
+                
+                container_name = service.container_name or service.name
                 logger.info(f"Run container {container_name} : start")
                 self.operator.container_run(service)
                 if service.healthcheck and not isinstance(
@@ -102,8 +107,9 @@ class CommandUp:
             f"Wait container {container_name} plan. Interval: {interval} timeout: {timeout} retries: {retries}"
         )
 
-        state = self.operator.container_health_status(container_name)
+        
         while self._system_interactions.time() < deadline and attempt < max_attempts:
+            state = self.operator.container_health_status(container_name)
             health = state.health
             status = state.status
             logger.info(
