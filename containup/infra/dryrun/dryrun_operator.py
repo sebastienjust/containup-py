@@ -8,6 +8,8 @@ from containup.business.commands.container_operator import (
     ContainerOperatorException,
 )
 from containup.business.execution_listener import (
+    ExecutionEvtImagExistsCheck,
+    ExecutionEvtImagePull,
     ExecutionListener,
     ExecutionEvtContainerExistsCheck,
     ExecutionEvtContainerRemoved,
@@ -26,7 +28,16 @@ class DryRunOperator(ContainerOperator):
         self._containers: Dict[str, DryRunContainer] = {}
         self._volumes: Dict[str, DryRunVolume] = {}
         self._networks: Dict[str, DryRunNetwork] = {}
+        self._images: list[str] = []
         self._auditor = auditor
+
+    def image_exists(self, image: str):
+        exists: bool = image in self._images
+        self._auditor.record(ExecutionEvtImagExistsCheck(image, exists))
+        return exists
+
+    def image_pull(self, image: str):
+        self._auditor.record(ExecutionEvtImagePull(image))
 
     def container_exists(self, container_name: str) -> bool:
         result = container_name in self._containers
@@ -42,7 +53,7 @@ class DryRunOperator(ContainerOperator):
                 f"Container {container_name} not found"
             ) from e
 
-    def container_run(self, service: Service):
+    def container_run(self, stack_name: str, service: Service):
         container_id: str = service.container_name or service.name
         self._containers[container_id] = DryRunContainer(container_id, service)
         self._auditor.record(ExecutionEvtContainerRun(container_id, service))
@@ -57,7 +68,7 @@ class DryRunOperator(ContainerOperator):
         )
         return result
 
-    def volume_create(self, volume: Volume) -> None:
+    def volume_create(self, stack_name: str, volume: Volume) -> None:
         self._auditor.record(ExecutionEvtVolumeCreated(volume.name, volume))
         self._volumes[volume.name] = DryRunVolume(volume.name, volume)
 
@@ -66,7 +77,7 @@ class DryRunOperator(ContainerOperator):
         self._auditor.record(ExecutionEvtNetworkExistsCheck(network_name, result))
         return result
 
-    def network_create(self, network: Network) -> None:
+    def network_create(self, stack_name: str, network: Network) -> None:
         self._auditor.record(ExecutionEvtNetworkCreated(network.name, network))
         self._networks[network.name] = DryRunNetwork(network.name, network)
 

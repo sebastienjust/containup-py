@@ -5,13 +5,32 @@ from containup.business.commands.container_health_status import ContainerHealthS
 
 
 class ContainerOperator(ABC):
+
+    @abstractmethod
+    def image_exists(self, image: str) -> bool:
+        """Checks if image exists
+
+        Arguments:
+            image (str) image coordinates
+        """
+        pass
+
+    @abstractmethod
+    def image_pull(self, image: str):
+        """Pulls image from remote reposioty
+
+        Arguments:
+            image (str) image coordinates
+        """
+        pass
+
     @abstractmethod
     def container_exists(self, container_name: str) -> bool:
         """Asks docker if the container exists"""
         pass
 
     @abstractmethod
-    def container_run(self, service: Service):
+    def container_run(self, stack_name: str, service: Service):
         """Runs the service (ie. associated container)"""
         pass
 
@@ -31,7 +50,7 @@ class ContainerOperator(ABC):
         pass
 
     @abstractmethod
-    def volume_create(self, volume: Volume) -> None:
+    def volume_create(self, stack_name: str, volume: Volume) -> None:
         """Creates the volume"""
         pass
 
@@ -41,7 +60,7 @@ class ContainerOperator(ABC):
         pass
 
     @abstractmethod
-    def network_create(self, network: Network) -> None:
+    def network_create(self, stack_name: str, network: Network) -> None:
         """Creates the network"""
         pass
 

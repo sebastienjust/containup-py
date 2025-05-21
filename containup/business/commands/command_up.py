@@ -30,7 +30,9 @@ class CommandUp:
         try:
             self._ensure_volumes()
             self._ensure_networks()
+
             services = self.stack.get_services_sorted(filter_services)
+            self._ensure_images(services)
 
             for service in services:
                 container_name = service.container_name or service.name
@@ -45,7 +47,7 @@ class CommandUp:
 
                 container_name = service.container_name or service.name
                 logger.info(f"Run container {container_name} : start")
-                self.operator.container_run(service)
+                self.operator.container_run(self.stack.name, service)
                 if service.healthcheck and not isinstance(
                     service.healthcheck, NoneHealthcheck
                 ):
@@ -64,7 +66,7 @@ class CommandUp:
             logger.debug(f"Volume {vol.name}: checking if exists")
             if not self.operator.volume_exists(vol.name):
                 logger.debug(f"Volume {vol.name}: create volume")
-                self.operator.volume_create(vol)
+                self.operator.volume_create(self.stack.name, vol)
                 logger.debug(f"Volume {vol.name}: volume created")
             else:
                 logger.debug(f"Volume {vol.name}: already exists")
@@ -74,10 +76,22 @@ class CommandUp:
             logger.debug(f"Network {net.name}: checking if exists")
             if not self.operator.network_exists(net.name):
                 logger.debug(f"Network {net.name}: create network")
-                self.operator.network_create(net)
+                self.operator.network_create(self.stack.name, net)
                 logger.debug(f"Network {net.name}: network created")
             else:
                 logger.debug(f"Network {net.name}: already exists")
+
+    def _ensure_images(self, containers: list[Service]):
+        for container in containers:
+            self._ensure_image(container)
+
+    def _ensure_image(self, container: Service):
+        logger.debug(f"Image {container.image}: checking if exists")
+        exists = self.operator.image_exists(container.image)
+        logger.debug(f"Image {container.image}: exists={exists}")
+        if not exists:
+            logger.debug(f"Image {container.image}: pulling")
+            self.operator.image_pull(container.image)
 
     def _container_wait_healthy(self, service: Service) -> None:
         healthcheck = service.healthcheck

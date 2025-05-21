@@ -34,6 +34,22 @@ class ExecutionEvtVolumeCreated(ExecutionEvtVolume):
 
 
 @dataclass
+class ExecutionEvtImage(ExecutionEvt):
+    image_id: str
+
+
+@dataclass
+class ExecutionEvtImagExistsCheck(ExecutionEvtImage):
+    image_id: str
+    exists: bool
+
+
+@dataclass
+class ExecutionEvtImagePull(ExecutionEvtImage):
+    image_id: str
+
+
+@dataclass
 class ExecutionEvtContainer(ExecutionEvt):
     container_id: str
 
