@@ -8,6 +8,8 @@ from containup.business.commands.container_operator import (
     ContainerOperatorException,
 )
 from containup.business.execution_listener import (
+    ExecutionEvtImagExistsCheck,
+    ExecutionEvtImagePull,
     ExecutionListener,
     ExecutionEvtContainerExistsCheck,
     ExecutionEvtContainerRemoved,
@@ -26,7 +28,16 @@ class DryRunOperator(ContainerOperator):
         self._containers: Dict[str, DryRunContainer] = {}
         self._volumes: Dict[str, DryRunVolume] = {}
         self._networks: Dict[str, DryRunNetwork] = {}
+        self._images: list[str] = []
         self._auditor = auditor
+
+    def image_exists(self, image: str):
+        exists: bool = image in self._images
+        self._auditor.record(ExecutionEvtImagExistsCheck(image, exists))
+        return exists
+
+    def image_pull(self, image: str):
+        self._auditor.record(ExecutionEvtImagePull(image))
 
     def container_exists(self, container_name: str) -> bool:
         result = container_name in self._containers

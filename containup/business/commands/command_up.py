@@ -30,7 +30,9 @@ class CommandUp:
         try:
             self._ensure_volumes()
             self._ensure_networks()
+
             services = self.stack.get_services_sorted(filter_services)
+            self._ensure_images(services)
 
             for service in services:
                 container_name = service.container_name or service.name
@@ -78,6 +80,18 @@ class CommandUp:
                 logger.debug(f"Network {net.name}: network created")
             else:
                 logger.debug(f"Network {net.name}: already exists")
+
+    def _ensure_images(self, containers: list[Service]):
+        for container in containers:
+            self._ensure_image(container)
+
+    def _ensure_image(self, container: Service):
+        logger.debug(f"Image {container.image}: checking if exists")
+        exists = self.operator.image_exists(container.image)
+        logger.debug(f"Image {container.image}: exists={exists}")
+        if not exists:
+            logger.debug(f"Image {container.image}: pulling")
+            self.operator.image_pull(container.image)
 
     def _container_wait_healthy(self, service: Service) -> None:
         healthcheck = service.healthcheck

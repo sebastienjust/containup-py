@@ -117,7 +117,7 @@ class ContainerItemNames:
     def __init__(self):
         self.max_length = self._container_item_names_max_length()
         key_empty = ""
-        self.key_empty_formatted = f"    {key_empty:<{self.max_length}} "
+        self.key_empty_formatted = f"   {key_empty:<{self.max_length}} "
         pass
 
     def _container_item_names_max_length(self):
@@ -137,7 +137,7 @@ class ContainerItemNames:
             key = (
                 self.key_empty_formatted
                 if i > 0
-                else f"    {item_key.name:<{self.max_length}}:"
+                else f"   {item_key.name:<{self.max_length}}:"
             )
             result.append(key + " " + value)
         return result
@@ -154,8 +154,9 @@ def report_container(
         audit_report, AuditAlertLocation.service(c.name).image()
     )
 
+    container_number_fmt: str = "" + str(container_number) + "."
     lines.append(
-        f"{container_number}. {c.name} ({image_str(c.image, image_alerts_fmt)})"
+        f"{container_number_fmt:<2} {c.name} ({image_str(c.image, image_alerts_fmt)})"
     )
     if c.network:
         lines.extend(item_names.format(item_names.network, [c.network]))
@@ -167,7 +168,7 @@ def report_container(
                 port_lines.append(f"{p.host_port}:{p.container_port}/{p.protocol}")
             else:
                 port_lines.append(f"{p.container_port}/{p.protocol}")
-        lines.extend(item_names.format(item_names.network, [", ".join(port_lines)]))
+        lines.extend(item_names.format(item_names.ports, [", ".join(port_lines)]))
 
     if c.volumes:
         volume_lines: list[str] = []

@@ -5,6 +5,25 @@ from containup.business.commands.container_health_status import ContainerHealthS
 
 
 class ContainerOperator(ABC):
+
+    @abstractmethod
+    def image_exists(self, image: str) -> bool:
+        """Checks if image exists
+
+        Arguments:
+            image (str) image coordinates
+        """
+        pass
+
+    @abstractmethod
+    def image_pull(self, image: str):
+        """Pulls image from remote reposioty
+
+        Arguments:
+            image (str) image coordinates
+        """
+        pass
+
     @abstractmethod
     def container_exists(self, container_name: str) -> bool:
         """Asks docker if the container exists"""
