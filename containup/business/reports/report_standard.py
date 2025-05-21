@@ -257,7 +257,12 @@ def volume_evt_summaries(evts: list[ExecutionEvtVolume]) -> list[str]:
     summaries: list[str] = []
     for evt in evts:
         if isinstance(evt, ExecutionEvtVolumeExistsCheck):
-            pass
+            if evt.exists is None:
+                summaries.append("🟤 unknown")
+            if evt.exists == True:
+                summaries.append("🟢 exists")
+            else:
+                summaries.append("⚫ missing")
         elif isinstance(evt, ExecutionEvtVolumeRemoved):
             summaries.append("🔴 removed")
         elif isinstance(evt, ExecutionEvtVolumeCreated):
@@ -276,7 +281,12 @@ def network_evt_summaries(evts: list[ExecutionEvtNetwork]) -> list[str]:
     summaries: list[str] = []
     for evt in evts:
         if isinstance(evt, ExecutionEvtNetworkExistsCheck):
-            pass
+            if evt.exists is None:
+                summaries.append("🟤 unknown")
+            if evt.exists == True:
+                summaries.append("🟢 exists")
+            else:
+                summaries.append("⚫ missing")
         elif isinstance(evt, ExecutionEvtNetworkRemoved):
             summaries.append("🔴 removed")
         elif isinstance(evt, ExecutionEvtNetworkCreated):
