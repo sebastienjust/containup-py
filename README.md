@@ -412,7 +412,7 @@ For example, if an image is not available on the host, `--live-check` will verif
 if the image is available, then tell you that image will be downladed. Same for
 containers, if the container is running, `--live-check` will tell : 
 
----
+```text
 3. pgadmin
    Container  : 🟢 exists → 🔴 removed → 🟢 run
    Image      : dpage/pgadmin4 🟢 exists
@@ -422,7 +422,7 @@ containers, if the container is running, `--live-check` will tell :
 5. traefik-whoami
    Container  : ⚫ missing → 🟢 run
    Image      : traefik/whoami ⚫ missing → 📥 pulled
----
+```
 
 
 
