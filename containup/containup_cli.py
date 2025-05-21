@@ -51,6 +51,11 @@ class Config:
         """Returns whether or not to execute the command in dry-run mode"""
         return bool(getattr(self._args, "dry_run", False))
 
+    @property
+    def live_check(self) -> bool:
+        """When in dry-run mode, tells if we need to read the live system."""
+        return bool(getattr(self._args, "live_check", False))
+
     def __repr__(self) -> str:
         return (
             f"Config(command={self.command!r}, "
@@ -90,6 +95,7 @@ def containup_cli_args(prog: str, known_args: list[str]) -> Config:
 
     up_parser = subparsers.add_parser("up")
     _add_dry_run(up_parser)
+    _add_live_check(up_parser)
     up_parser.add_argument(
         "--service",
         nargs="*",
@@ -99,6 +105,7 @@ def containup_cli_args(prog: str, known_args: list[str]) -> Config:
 
     down_parser = subparsers.add_parser("down")
     _add_dry_run(down_parser)
+    _add_live_check(down_parser)
     down_parser.add_argument(
         "--service", nargs="*", help="If specified, stops only those services"
     )
@@ -114,7 +121,15 @@ def _add_dry_run(parser: argparse.ArgumentParser) -> None:
     parser.add_argument(
         "--dry-run",
         action="store_true",
-        help="If specified, launch command in dry-run mode",
+        help="Launch command in dry-run mode (simulation). Defaults to false.",
+    )
+
+
+def _add_live_check(parser: argparse.ArgumentParser) -> None:
+    parser.add_argument(
+        "--live-check",
+        action="store_true",
+        help="Only available if dry-run mode is active. When specified tells to check operations against a live system.",
     )
 
 

@@ -38,7 +38,7 @@ class StackRunner:
         self.system_interactions = UserInteractionsCLI()
         self.operator = (
             DryRunOperator(self._execution_listener)
-            if self.config.dry_run
+            if self.config.dry_run and not self.config.live_check
             else DockerOperator(self.client, self.system_interactions)
         )
 
@@ -46,11 +46,22 @@ class StackRunner:
     def run(self):
         alerts = self._audit_registry.inspect(self.stack)
         if self.config.command == "up":
-            CommandUp(self.stack, self.operator, self.system_interactions).up(
-                self.config.services
-            )
+            CommandUp(
+                stack=self.stack,
+                operator=self.operator,
+                system_interactions=self.system_interactions,
+                auditor=self._execution_listener,
+                dry_run=self.config.dry_run,
+                live_check=self.config.live_check,
+            ).up(self.config.services)
         elif self.config.command == "down":
-            CommandDown(self.stack, self.operator).down(self.config.services)
+            CommandDown(
+                stack=self.stack,
+                operator=self.operator,
+                auditor=self._execution_listener,
+                dry_run=self.config.dry_run,
+                live_check=self.config.live_check,
+            ).down(self.config.services)
         else:
             raise RuntimeError(f"Unrecognized command {self.config.command}")
         if self.config.dry_run:

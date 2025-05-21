@@ -56,7 +56,9 @@ def test_volume_tmpfs():
             tmpfs_size=123456,
         )
     )
-    assert m["Source"] is None
+    # Not sure it is the right thing to do, but there is no documentation
+    # about this.
+    assert m["Source"] == ""
     assert m["Target"] == "/opt/data"
     assert m["Type"] == "tmpfs"
     assert m["Consistency"] == "cached"

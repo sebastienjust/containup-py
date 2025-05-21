@@ -400,6 +400,32 @@ Upcoming (not in this release)
 These checks don’t block anything. They just make the implicit explicit — so you can catch it early, 
 and fix it while it’s still safe.
 
+### ☕ `--dry-run` + `--live-check`
+
+`--dry-run` tells you what containup will do **without talking to Docker**.
+It is useful when you want to check what containup will do, without anything being
+installed on the host. 
+
+`--live-check` option tells what it will do **against running Docker containers**. 
+
+For example, if an image is not available on the host, `--live-check` will verify
+if the image is available, then tell you that image will be downladed. Same for
+containers, if the container is running, `--live-check` will tell : 
+
+---
+3. pgadmin
+   Container  : 🟢 exists → 🔴 removed → 🟢 run
+   Image      : dpage/pgadmin4 🟢 exists
+
+...
+
+5. traefik-whoami
+   Container  : ⚫ missing → 🟢 run
+   Image      : traefik/whoami ⚫ missing → 📥 pulled
+---
+
+
+
 
 ## ▶️ Use your script
 

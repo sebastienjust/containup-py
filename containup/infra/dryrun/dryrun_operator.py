@@ -8,21 +8,12 @@ from containup.business.commands.container_operator import (
     ContainerOperatorException,
 )
 from containup.business.execution_listener import (
-    ExecutionEvtImagExistsCheck,
-    ExecutionEvtImagePull,
     ExecutionListener,
-    ExecutionEvtContainerExistsCheck,
-    ExecutionEvtContainerRemoved,
-    ExecutionEvtContainerRun,
-    ExecutionEvtVolumeExistsCheck,
-    ExecutionEvtVolumeCreated,
-    ExecutionEvtNetworkCreated,
-    ExecutionEvtNetworkExistsCheck,
 )
 
 
 class DryRunOperator(ContainerOperator):
-    """Operator that does nothing except collecting logs and simulating a fake container operator"""
+    """Operator that does nothing. Used as a safety guard when using the dry-run mode"""
 
     def __init__(self, auditor: ExecutionListener):
         self._containers: Dict[str, DryRunContainer] = {}
@@ -33,21 +24,21 @@ class DryRunOperator(ContainerOperator):
 
     def image_exists(self, image: str):
         exists: bool = image in self._images
-        self._auditor.record(ExecutionEvtImagExistsCheck(image, exists))
+
         return exists
 
     def image_pull(self, image: str):
-        self._auditor.record(ExecutionEvtImagePull(image))
+        pass
 
     def container_exists(self, container_name: str) -> bool:
         result = container_name in self._containers
-        self._auditor.record(ExecutionEvtContainerExistsCheck(container_name, result))
+
         return result
 
     def container_remove(self, container_name: str):
         try:
             del self._containers[container_name]
-            self._auditor.record(ExecutionEvtContainerRemoved(container_name))
+
         except KeyError as e:
             raise ContainerOperatorException(
                 f"Container {container_name} not found"
@@ -56,29 +47,22 @@ class DryRunOperator(ContainerOperator):
     def container_run(self, stack_name: str, service: Service):
         container_id: str = service.container_name or service.name
         self._containers[container_id] = DryRunContainer(container_id, service)
-        self._auditor.record(ExecutionEvtContainerRun(container_id, service))
 
     def container_health_status(self, container_name: str) -> ContainerHealthStatus:
         return ContainerHealthStatus("running", "healthy")
 
     def volume_exists(self, volume_name: str) -> bool:
         result = volume_name in self._volumes
-        self._auditor.record(
-            ExecutionEvtVolumeExistsCheck(volume_id=volume_name, exists=result)
-        )
         return result
 
     def volume_create(self, stack_name: str, volume: Volume) -> None:
-        self._auditor.record(ExecutionEvtVolumeCreated(volume.name, volume))
         self._volumes[volume.name] = DryRunVolume(volume.name, volume)
 
     def network_exists(self, network_name: str) -> bool:
         result = network_name in self._networks
-        self._auditor.record(ExecutionEvtNetworkExistsCheck(network_name, result))
         return result
 
     def network_create(self, stack_name: str, network: Network) -> None:
-        self._auditor.record(ExecutionEvtNetworkCreated(network.name, network))
         self._networks[network.name] = DryRunNetwork(network.name, network)
 
 

@@ -7,13 +7,19 @@ and uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [0.1.10] - unreleased
 
+
+### Added
+
+- `--dry-run` can be completed with `--live-check`.
+- Added `--live-check` results in reports
+- Add labels to generated containers, volumes and network so that you know
+  they come from containup. Added "docker-compose" compatible label to help
+  identifing container groups in IDEs. 
+
 ### Changed
 
 - Changed odoo example to n8n example to be able to demonstrate more things.
 - Move containup-try.sh in samples/
-- Add labels to generated containers, volumes and network so that you know
-  they come from containup. Added "docker-compose" compatible label to help
-  identifing container groups in IDEs. 
 
 ### 
 

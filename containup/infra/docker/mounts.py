@@ -44,7 +44,7 @@ def mount_to_docker_specs(mount: ServiceMount) -> Mount:
 
     elif isinstance(mount, TmpfsMount):  # type: ignore
         return Mount(
-            source=None,
+            source="",
             type="tmpfs",
             target=mount.target,
             read_only=False if mount.read_only is None else mount.read_only,
