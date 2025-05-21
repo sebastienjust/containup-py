@@ -39,7 +39,6 @@ class DockerOperator(ContainerOperator):
         try:
             (repository, image_tag) = cast(Tuple[str, str], parse_repository_tag(image))
             tag = image_tag or "latest"  # type: ignore
-
             exists = False
             try:
                 self.client.images.get(image)

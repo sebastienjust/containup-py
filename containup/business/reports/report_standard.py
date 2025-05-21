@@ -5,24 +5,25 @@ from containup.business.audit.audit_alert import (
     AuditAlertLocation,
 )
 from containup.business.audit.audit_report import AuditResult
+from containup.business.live_state.stack_state import ContainerState
+from containup.business.live_state.stack_state import VolumeState
+from containup.business.live_state.stack_state import ImageState
+from containup.business.live_state.stack_state import NetworkState
 from containup.business.execution_listener import (
     ExecutionEvtContainer,
-    ExecutionEvtContainerExistsCheck,
     ExecutionEvtContainerRemoved,
     ExecutionEvtContainerRun,
     ExecutionEvtImage,
-    ExecutionEvtImageExistsCheck,
     ExecutionEvtImagePull,
     ExecutionListener,
     ExecutionEvtNetwork,
     ExecutionEvtVolume,
-    ExecutionEvtVolumeExistsCheck,
     ExecutionEvtVolumeRemoved,
     ExecutionEvtVolumeCreated,
-    ExecutionEvtNetworkExistsCheck,
     ExecutionEvtNetworkRemoved,
     ExecutionEvtNetworkCreated,
 )
+from containup.business.live_state.stack_state import StackState
 from containup.containup_cli import Config
 from containup.stack.network import Network
 from containup.stack.service_mounts import BindMount, VolumeMount
@@ -35,6 +36,8 @@ def report_standard(
     stack: Stack,
     config: Config,
     audit_report: AuditResult,
+    state: StackState,
+    live_operations: bool,
 ) -> str:
     lines: list[str] = []
 
@@ -45,7 +48,7 @@ def report_standard(
         f"🧱 Stack: {stack.name} (dry-run) {config.command} {services_annotated}\n"
     )
 
-    volumes = stack.mounts
+    volumes = stack.volumes
     networks = stack.networks
 
     max_key_len_volumes = max((len(n.name) for n in volumes), default=0)
@@ -55,13 +58,17 @@ def report_standard(
     if volumes:
         lines.append("📦 Volumes")
         for volume in volumes:
-            lines += report_volume(volume, execution_listener, max_key_len)
+            lines += report_volume(
+                volume, execution_listener, max_key_len, state, live_operations
+            )
         lines.append("")
 
     if networks:
         lines.append("🔗 Networks")
         for network in networks:
-            lines += report_network(network, execution_listener, max_key_len)
+            lines += report_network(
+                network, execution_listener, max_key_len, state, live_operations
+            )
         lines.append("")
 
     lines.append("🚀 Containers\n")
@@ -69,7 +76,12 @@ def report_standard(
     for container in stack.services:
         container_number += 1
         lines += report_container(
-            container_number, container, execution_listener, audit_report
+            container_number,
+            container,
+            execution_listener,
+            audit_report,
+            state,
+            live_operations,
         )
         lines.append("")
 
@@ -83,27 +95,40 @@ class VolumeEvts:
 
 
 def report_volume(
-    volume: Volume, evts: ExecutionListener, max_key_len: int
+    volume: Volume,
+    evts: ExecutionListener,
+    max_key_len: int,
+    state: StackState,
+    live_operations: bool,
 ) -> list[str]:
     volume_evts: list[ExecutionEvtVolume] = []
     for evt in evts.get_events():
         if isinstance(evt, ExecutionEvtVolume) and evt.volume_id == volume.name:
             volume_evts.append(evt)
     line = f"  - {volume.name:<{max_key_len}} : " + " → ".join(
-        volume_evt_summaries(volume_evts)
+        volume_evt_summaries(
+            state.get_volume_state(volume.name), volume_evts, live_operations
+        )
     )
     return [line]
 
 
 def report_network(
-    network: Network, evts: ExecutionListener, max_key_len: int
+    network: Network,
+    evts: ExecutionListener,
+    max_key_len: int,
+    state: StackState,
+    live_operations: bool,
 ) -> list[str]:
+
     network_evts: list[ExecutionEvtNetwork] = []
     for evt in evts.get_events():
         if isinstance(evt, ExecutionEvtNetwork) and evt.network_id == network.name:
             network_evts.append(evt)
     line = f"  - {network.name:<{max_key_len}} : " + " → ".join(
-        network_evt_summaries(network_evts)
+        network_evt_summaries(
+            state.get_network_state(network.name), network_evts, live_operations
+        )
     )
     return [line]
 
@@ -159,6 +184,8 @@ def report_container(
     c: Service,
     execution_listener: ExecutionListener,
     audit_report: AuditResult,
+    state: StackState,
+    live_operations: bool,
 ) -> list[str]:
     lines: list[str] = []
 
@@ -168,6 +195,7 @@ def report_container(
 
     container_number_fmt: str = "" + str(container_number) + "."
 
+    container_state = state.get_container_state(c.container_name_safe())
     container_evts: list[ExecutionEvtContainer] = []
     for evt in execution_listener.get_events():
         if (
@@ -175,7 +203,9 @@ def report_container(
             and evt.container_id == c.container_name_safe()
         ):
             container_evts.append(evt)
-    container_evt_summary = " → ".join(container_evt_summaries(container_evts))
+    container_evt_summary = " → ".join(
+        container_evt_summaries(container_state, container_evts, live_operations)
+    )
 
     lines.append(f"{container_number_fmt:<2} {c.name}")
     if container_evt_summary:
@@ -188,7 +218,9 @@ def report_container(
         if isinstance(evt, ExecutionEvtImage) and evt.image_id == c.image:
             image_evts.append(evt)
 
-    image_evt_summary = " → ".join(image_evt_summaries(image_evts))
+    image_evt_summary = " → ".join(
+        image_evt_summaries(state.get_image_state(c.image), image_evts, live_operations)
+    )
     image_lines = [c.image + " " + image_evt_summary]
     image_lines += tab_messages(
         to_formatted_alert_list(
@@ -287,49 +319,64 @@ def report_container(
     return lines
 
 
-def container_evt_summaries(evts: list[ExecutionEvtContainer]) -> list[str]:
-    summaries: list[str] = []
+def container_evt_summaries(
+    state: ContainerState, evts: list[ExecutionEvtContainer], live_operations: bool
+) -> list[str]:
+    summaries: list[str] = (
+        []
+        if not live_operations
+        else [
+            (
+                "🟢 exists"
+                if state == "exists"
+                else "⚫ missing" if state == "missing" else "🟤 unknown"
+            )
+        ]
+    )
     for evt in evts:
-        if isinstance(evt, ExecutionEvtContainerExistsCheck):
-            if evt.exists is None:
-                summaries.append("🟤 unknown")
-            elif evt.exists == True:
-                summaries.append("🟢 exists")
-            else:
-                summaries.append("⚫ missing")
-        elif isinstance(evt, ExecutionEvtContainerRemoved):
+        if isinstance(evt, ExecutionEvtContainerRemoved):
             summaries.append("🔴 removed")
         elif isinstance(evt, ExecutionEvtContainerRun):
             summaries.append("🟢 run")
     return summaries
 
 
-def image_evt_summaries(evts: list[ExecutionEvtImage]) -> list[str]:
-    summaries: list[str] = []
+def image_evt_summaries(
+    state: ImageState, evts: list[ExecutionEvtImage], live_operations: bool
+) -> list[str]:
+    summaries: list[str] = (
+        []
+        if not live_operations
+        else [
+            (
+                "🟢 exists"
+                if state == "exists"
+                else "⚫ missing" if state == "missing" else "🟤 unknown"
+            )
+        ]
+    )
     for evt in evts:
-        if isinstance(evt, ExecutionEvtImageExistsCheck):
-            if evt.exists is None:
-                summaries.append("🟤 unknown")
-            elif evt.exists == True:
-                summaries.append("🟢 exists")
-            else:
-                summaries.append("⚫ missing")
-        elif isinstance(evt, ExecutionEvtImagePull):
+        if isinstance(evt, ExecutionEvtImagePull):
             summaries.append("📥 pulled")
     return summaries
 
 
-def volume_evt_summaries(evts: list[ExecutionEvtVolume]) -> list[str]:
-    summaries: list[str] = []
+def volume_evt_summaries(
+    state: VolumeState, evts: list[ExecutionEvtVolume], live_operations: bool
+) -> list[str]:
+    summaries: list[str] = (
+        []
+        if not live_operations
+        else [
+            (
+                "🟢 exists"
+                if state == "exists"
+                else "⚫ missing" if state == "missing" else "🟤 unknown"
+            )
+        ]
+    )
     for evt in evts:
-        if isinstance(evt, ExecutionEvtVolumeExistsCheck):
-            if evt.exists is None:
-                summaries.append("🟤 unknown")
-            elif evt.exists == True:
-                summaries.append("🟢 exists")
-            else:
-                summaries.append("⚫ missing")
-        elif isinstance(evt, ExecutionEvtVolumeRemoved):
+        if isinstance(evt, ExecutionEvtVolumeRemoved):
             summaries.append("🔴 removed")
         elif isinstance(evt, ExecutionEvtVolumeCreated):
             labels = " ".join(
@@ -343,17 +390,22 @@ def volume_evt_summaries(evts: list[ExecutionEvtVolume]) -> list[str]:
     return summaries
 
 
-def network_evt_summaries(evts: list[ExecutionEvtNetwork]) -> list[str]:
-    summaries: list[str] = []
+def network_evt_summaries(
+    state: NetworkState, evts: list[ExecutionEvtNetwork], live_operations: bool
+) -> list[str]:
+    summaries: list[str] = (
+        []
+        if not live_operations
+        else [
+            (
+                "🟢 exists"
+                if state == "exists"
+                else "⚫ missing" if state == "missing" else "🟤 unknown"
+            )
+        ]
+    )
     for evt in evts:
-        if isinstance(evt, ExecutionEvtNetworkExistsCheck):
-            if evt.exists is None:
-                summaries.append("🟤 unknown")
-            elif evt.exists == True:
-                summaries.append("🟢 exists")
-            else:
-                summaries.append("⚫ missing")
-        elif isinstance(evt, ExecutionEvtNetworkRemoved):
+        if isinstance(evt, ExecutionEvtNetworkRemoved):
             summaries.append("🔴 removed")
         elif isinstance(evt, ExecutionEvtNetworkCreated):
             details = f"driver={evt.network.driver}" if evt.network.driver else ""

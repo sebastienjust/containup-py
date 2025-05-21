@@ -8,17 +8,14 @@ from containup.business.commands.container_operator import (
 )
 from containup.business.commands.user_interactions import UserInteractions
 from containup.business.execution_listener import (
-    ExecutionEvtContainerExistsCheck,
     ExecutionEvtContainerRemoved,
     ExecutionEvtContainerRun,
-    ExecutionEvtImageExistsCheck,
     ExecutionEvtImagePull,
     ExecutionEvtNetworkCreated,
-    ExecutionEvtNetworkExistsCheck,
     ExecutionEvtVolumeCreated,
-    ExecutionEvtVolumeExistsCheck,
     ExecutionListener,
 )
+from containup.business.live_state.stack_state import StackState
 from containup.stack.service import Service
 from containup.stack.service_healthcheck import HealthcheckOptions
 from containup.stack.stack import Stack
@@ -44,6 +41,7 @@ class CommandUp:
         auditor: ExecutionListener,
         dry_run: bool,
         live_check: bool,
+        stack_state: StackState,
     ):
         self.stack = stack
         self.operator = operator
@@ -51,9 +49,11 @@ class CommandUp:
         self._system_read = live_check if dry_run else True
         self._system_write = not dry_run
         self._auditor = auditor
+        self._stack_state = stack_state
 
     def up(self, filter_services: Optional[List[str]] = None) -> None:
         try:
+
             self._ensure_volumes()
             self._ensure_networks()
 
@@ -61,16 +61,9 @@ class CommandUp:
             self._ensure_images(services)
 
             for service in services:
-                container_name = service.container_name or service.name
-
-                exists: Optional[bool] = None
-                if self._system_read:
-                    exists = self.operator.container_exists(container_name)
-                self._auditor.record(
-                    ExecutionEvtContainerExistsCheck(container_name, exists)
-                )
-
-                if exists:
+                container_name = service.container_name_safe()
+                state = self._stack_state.get_container_state(container_name)
+                if state == "exists":
                     logger.info(f"Container {container_name} exists... removing")
                     if self._system_write:
                         self.operator.container_remove(container_name)
@@ -101,18 +94,13 @@ class CommandUp:
             self._system_interactions.exit_with_error(1)
 
     def _ensure_volumes(self):
-        for vol in self.stack.mounts:
+        for vol in self.stack.volumes:
             self._ensure_volume(vol)
 
     def _ensure_volume(self, vol: Volume):
         logger.debug(f"Volume {vol.name}: checking if exists")
-
-        exists: Optional[bool] = None
-        if self._system_read:
-            exists = self.operator.volume_exists(vol.name)
-        self._auditor.record(ExecutionEvtVolumeExistsCheck(vol.name, exists))
-
-        if not exists:
+        state = self._stack_state.get_volume_state(vol.name)
+        if state != "exists":
             logger.debug(f"Volume {vol.name}: create volume")
             self._auditor.record(ExecutionEvtVolumeCreated(vol.name, vol))
             if self._system_write:
@@ -127,12 +115,8 @@ class CommandUp:
 
     def _ensure_network(self, net: Network):
         logger.debug(f"Network {net.name}: checking if exists")
-        exists: Optional[bool] = None
-        if self._system_read:
-            exists = self.operator.network_exists(net.name)
-        self._auditor.record(ExecutionEvtNetworkExistsCheck(net.name, exists))
-
-        if not exists:
+        state = self._stack_state.get_network_state(net.name)
+        if state != "exists":
             logger.debug(f"Network {net.name}: create network")
             self._auditor.record(ExecutionEvtNetworkCreated(net.name, net))
             if self._system_write:
@@ -147,15 +131,8 @@ class CommandUp:
 
     def _ensure_image(self, container: Service):
         image = container.image
-
-        logger.debug(f"Image {image}: checking if exists")
-        exists: Optional[bool] = None
-        if self._system_read:
-            exists = self.operator.image_exists(image)
-        self._auditor.record(ExecutionEvtImageExistsCheck(image, exists))
-
-        logger.debug(f"Image {image}: exists={exists}")
-        if not exists:
+        state = self._stack_state.get_image_state(container.image)
+        if state != "exists":
             logger.debug(f"Image {image}: pulling")
             self._auditor.record(ExecutionEvtImagePull(image))
             if self._system_write:

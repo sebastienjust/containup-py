@@ -14,8 +14,7 @@ StockItem = Union[Service, Volume, Network]
 class Stack:
     def __init__(self, name: str):
         self.name = name
-
-        self.mounts: list[Volume] = []
+        self.volumes: list[Volume] = []
         self.networks: list[Network] = []
         self.services: list[Service] = []
 
@@ -26,7 +25,7 @@ class Stack:
             if isinstance(item, Service):
                 self.services.append(item)
             elif isinstance(item, Volume):
-                self.mounts.append(item)
+                self.volumes.append(item)
             elif isinstance(item, Network):  # type: ignore
                 self.networks.append(item)
         return self
