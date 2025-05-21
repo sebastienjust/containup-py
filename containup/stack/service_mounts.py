@@ -41,7 +41,9 @@ class BindMount(ServiceMount):
     read_only: Optional[bool] = None
     """If True, mount is read-only."""
 
-    consistency: Optional[Literal['default', 'consistent', 'cached', 'delegated']] = None
+    consistency: Optional[Literal["default", "consistent", "cached", "delegated"]] = (
+        None
+    )
     """Mount consistency mode ('default', 'consistent', 'cached', 'delegated')."""
 
     propagation: Optional[str] = None
@@ -66,7 +68,9 @@ class VolumeMount(ServiceMount):
     read_only: Optional[bool] = None
     """If True, volume is mounted read-only."""
 
-    consistency: Optional[Literal['default', 'consistent', 'cached', 'delegated']] = None
+    consistency: Optional[Literal["default", "consistent", "cached", "delegated"]] = (
+        None
+    )
     """Mount consistency mode ('default', 'consistent', 'cached', 'delegated')."""
 
     no_copy: bool = False
@@ -100,7 +104,9 @@ class TmpfsMount(ServiceMount):
     read_only: Optional[bool] = None
     """If True, tmpfs is mounted read-only."""
 
-    consistency: Optional[Literal['default', 'consistent', 'cached', 'delegated']] = None
+    consistency: Optional[Literal["default", "consistent", "cached", "delegated"]] = (
+        None
+    )
     """Mount consistency mode ('default', 'consistent', 'cached', 'delegated')."""
 
     tmpfs_size: Optional[Union[int, str]] = None
