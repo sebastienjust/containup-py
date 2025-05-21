@@ -15,6 +15,8 @@ and uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - Add labels to generated containers, volumes and network so that you know
   they come from containup. Added "docker-compose" compatible label to help
   identifing container groups in IDEs. 
+- Clear distinction between states when using containup "live" and containup "offline"
+- Added "check" command so simplify usage.
 
 ### Changed
 
