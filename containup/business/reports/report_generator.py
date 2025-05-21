@@ -1,6 +1,7 @@
 from containup.business.audit.audit_report import AuditResult
-from containup.business.reports.report_standard import report_standard
 from containup.business.execution_listener import ExecutionListener
+from containup.business.live_state.stack_state import StackState
+from containup.business.reports.report_standard import report_standard
 from containup.containup_cli import Config
 from containup.stack.stack import Stack
 
@@ -15,8 +16,13 @@ class ReportGenerator:
         config: Config,
         listener: ExecutionListener,
         alerts: AuditResult,
+        stack_state: StackState,
     ) -> str:
         report: str = report_standard(
-            execution_listener=listener, stack=stack, config=config, audit_report=alerts
+            execution_listener=listener,
+            stack=stack,
+            config=config,
+            audit_report=alerts,
+            state=stack_state,
         )
         return report

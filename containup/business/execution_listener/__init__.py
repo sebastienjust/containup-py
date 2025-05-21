@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
-from typing import Optional
+
 
 from containup.stack.network import Network
 from containup.stack.stack import Service
@@ -15,13 +15,6 @@ class ExecutionEvt(ABC):
 @dataclass
 class ExecutionEvtVolume(ExecutionEvt):
     volume_id: str
-
-
-@dataclass
-class ExecutionEvtVolumeExistsCheck(ExecutionEvtVolume):
-    volume_id: str
-    exists: Optional[bool] = None
-    """If None it means we don't know if the volume really exists or not in the system."""
 
 
 @dataclass
@@ -41,13 +34,6 @@ class ExecutionEvtImage(ExecutionEvt):
 
 
 @dataclass
-class ExecutionEvtImageExistsCheck(ExecutionEvtImage):
-    image_id: str
-    exists: Optional[bool]
-    """If None it means we don't know if the image really exists or not in the system."""
-
-
-@dataclass
 class ExecutionEvtImagePull(ExecutionEvtImage):
     image_id: str
 
@@ -55,13 +41,6 @@ class ExecutionEvtImagePull(ExecutionEvtImage):
 @dataclass
 class ExecutionEvtContainer(ExecutionEvt):
     container_id: str
-
-
-@dataclass
-class ExecutionEvtContainerExistsCheck(ExecutionEvtContainer):
-    container_id: str
-    exists: Optional[bool]
-    """If None it means we don't know if the container really exists or not in the system."""
 
 
 @dataclass
@@ -78,13 +57,6 @@ class ExecutionEvtContainerRun(ExecutionEvtContainer):
 @dataclass
 class ExecutionEvtNetwork(ExecutionEvt):
     network_id: str
-
-
-@dataclass
-class ExecutionEvtNetworkExistsCheck(ExecutionEvtNetwork):
-    network_id: str
-    exists: Optional[bool]
-    """If None it means we don't know if the network really exists or not in the system."""
 
 
 @dataclass

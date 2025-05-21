@@ -6,10 +6,10 @@ from containup.business.commands.container_operator import (
     ContainerOperatorException,
 )
 from containup.business.execution_listener import (
-    ExecutionEvtContainerExistsCheck,
     ExecutionEvtContainerRemoved,
     ExecutionListener,
 )
+from containup.business.live_state.stack_state import StackState
 from containup.stack.stack import (
     Stack,
 )
@@ -26,27 +26,22 @@ class CommandDown:
         auditor: ExecutionListener,
         dry_run: bool,
         live_check: bool,
+        stack_state: StackState,
     ):
         self.stack = stack
         self.operator = operator
         self._system_read = live_check if dry_run else True
         self._system_write = not dry_run
         self._auditor = auditor
+        self._stack_state = stack_state
 
     def down(self, filter_services: Optional[list[str]] = None) -> None:
         services = self.stack.get_services_sorted(filter_services)[::-1]
         for service in services:
-            container_name = service.container_name or service.name
+            container_name = service.container_name_safe()
+            container_state = self._stack_state.get_container_state(container_name)
             try:
-                container_exists: Optional[bool] = None
-                if self._system_read:
-                    logger.info(f"Remove container {container_name}: check if exists.")
-                    container_exists = self.operator.container_exists(container_name)
-                self._auditor.record(
-                    ExecutionEvtContainerExistsCheck(container_name, container_exists)
-                )
-
-                if container_exists == True or container_exists is None:
+                if container_state == "unknown" or container_state == "exists":
                     if self._system_write:
                         logger.info(
                             f"Remove container {container_name}: container exists, removing."

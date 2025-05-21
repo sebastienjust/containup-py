@@ -5,6 +5,8 @@ import docker
 from containup import containup_cli, Config
 from containup.business.audit.audit_registry import AuditRegistry
 from containup.business.execution_listener import ExecutionListenerStd
+from containup.business.live_state.stack_state import StackState
+from containup.business.live_state.stack_state_resolver import StackStateResolver
 from containup.business.plugins.plugin_builtins import PluginBuiltins
 from containup.business.plugins.plugin_registry import PluginRegistry, register
 from containup.business.reports.report_generator import ReportGenerator
@@ -45,6 +47,11 @@ class StackRunner:
     # Handle command line parsing and launches the commands on the stack
     def run(self):
         alerts = self._audit_registry.inspect(self.stack)
+        stack_state = (
+            StackState()
+            if (self.config.dry_run and not self.config.live_check)
+            else StackStateResolver(self.operator).resolve(self.stack)
+        )
         if self.config.command == "up":
             CommandUp(
                 stack=self.stack,
@@ -53,20 +60,27 @@ class StackRunner:
                 auditor=self._execution_listener,
                 dry_run=self.config.dry_run,
                 live_check=self.config.live_check,
+                stack_state=stack_state,
             ).up(self.config.services)
         elif self.config.command == "down":
+
             CommandDown(
                 stack=self.stack,
                 operator=self.operator,
                 auditor=self._execution_listener,
                 dry_run=self.config.dry_run,
                 live_check=self.config.live_check,
+                stack_state=stack_state,
             ).down(self.config.services)
         else:
             raise RuntimeError(f"Unrecognized command {self.config.command}")
         if self.config.dry_run:
             print(
                 self._report_generator.generate_report(
-                    self.stack, self.config, self._execution_listener, alerts
+                    stack=self.stack,
+                    config=self.config,
+                    listener=self._execution_listener,
+                    alerts=alerts,
+                    stack_state=stack_state,
                 ),
             )

@@ -19,9 +19,9 @@ def test_networks():
 
 def test_mounts():
     stack = create_n8n_stack()
-    assert any(n.name == "pg_data" for n in stack.mounts)
-    assert any(n.name == "n8n_data" for n in stack.mounts)
-    assert any(n.name == "pgadmin_data" for n in stack.mounts)
+    assert any(n.name == "pg_data" for n in stack.volumes)
+    assert any(n.name == "n8n_data" for n in stack.volumes)
+    assert any(n.name == "pgadmin_data" for n in stack.volumes)
 
 
 def test_services():
