@@ -1,17 +1,17 @@
-ruff>=0.11.9
-black>=24.0.0
-pyright>=1.1.400
-pytest>=7.4.0
-pre-commit>=4.2.0
-build>=1.2.2
-twine>=6.1.0
-bumpver>=2024.1130
+ruff==0.11.10
+black==25.1.0
+pyright==1.1.401
+pytest==8.3.5
+pre-commit==4.2.0
+build==1.2.2
+twine==6.1.0
+bumpver==2024.1130
 
 # Documentation
 # -------------
 # Sphinx engine
-sphinx>=8.2.3 
+sphinx==8.2.3
 # Theme of documentation
-furo>=2024.8.6
+furo==2024.8.6
 # To parse Markdown
-myst-parser>=4.0.1
+myst-parser==4.0.1
