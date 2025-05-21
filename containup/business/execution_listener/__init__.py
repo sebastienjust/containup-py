@@ -20,8 +20,9 @@ class ExecutionEvtVolume(ExecutionEvt):
 @dataclass
 class ExecutionEvtVolumeExistsCheck(ExecutionEvtVolume):
     volume_id: str
-    exists:Optional[bool] = None
+    exists: Optional[bool] = None
     """If None it means we don't know if the volume really exists or not in the system."""
+
 
 @dataclass
 class ExecutionEvtVolumeRemoved(ExecutionEvtVolume):
@@ -40,7 +41,7 @@ class ExecutionEvtImage(ExecutionEvt):
 
 
 @dataclass
-class ExecutionEvtImagExistsCheck(ExecutionEvtImage):
+class ExecutionEvtImageExistsCheck(ExecutionEvtImage):
     image_id: str
     exists: Optional[bool]
     """If None it means we don't know if the image really exists or not in the system."""

@@ -9,7 +9,6 @@ from containup.business.commands.container_operator import (
 )
 from containup.business.execution_listener import (
     ExecutionListener,
-    
 )
 
 
@@ -25,7 +24,7 @@ class DryRunOperator(ContainerOperator):
 
     def image_exists(self, image: str):
         exists: bool = image in self._images
-        
+
         return exists
 
     def image_pull(self, image: str):
@@ -33,13 +32,13 @@ class DryRunOperator(ContainerOperator):
 
     def container_exists(self, container_name: str) -> bool:
         result = container_name in self._containers
-        
+
         return result
 
     def container_remove(self, container_name: str):
         try:
             del self._containers[container_name]
-            
+
         except KeyError as e:
             raise ContainerOperatorException(
                 f"Container {container_name} not found"
@@ -48,7 +47,6 @@ class DryRunOperator(ContainerOperator):
     def container_run(self, stack_name: str, service: Service):
         container_id: str = service.container_name or service.name
         self._containers[container_id] = DryRunContainer(container_id, service)
-        
 
     def container_health_status(self, container_name: str) -> ContainerHealthStatus:
         return ContainerHealthStatus("running", "healthy")

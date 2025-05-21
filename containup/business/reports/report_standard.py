@@ -6,6 +6,13 @@ from containup.business.audit.audit_alert import (
 )
 from containup.business.audit.audit_report import AuditResult
 from containup.business.execution_listener import (
+    ExecutionEvtContainer,
+    ExecutionEvtContainerExistsCheck,
+    ExecutionEvtContainerRemoved,
+    ExecutionEvtContainerRun,
+    ExecutionEvtImage,
+    ExecutionEvtImageExistsCheck,
+    ExecutionEvtImagePull,
     ExecutionListener,
     ExecutionEvtNetwork,
     ExecutionEvtVolume,
@@ -61,7 +68,9 @@ def report_standard(
     container_number: int = 0
     for container in stack.services:
         container_number += 1
-        lines += report_container(container_number, container, audit_report)
+        lines += report_container(
+            container_number, container, execution_listener, audit_report
+        )
         lines.append("")
 
     return "\n".join(lines)
@@ -113,6 +122,8 @@ class ContainerItemNames:
     depends_on = ContainerItemKey("Depends on")
     commands = ContainerItemKey("Commands")
     labels = ContainerItemKey("Labels")
+    image = ContainerItemKey("Image")
+    container = ContainerItemKey("Container")
 
     def __init__(self):
         self.max_length = self._container_item_names_max_length()
@@ -144,22 +155,55 @@ class ContainerItemNames:
 
 
 def report_container(
-    container_number: int, c: Service, audit_report: AuditResult
+    container_number: int,
+    c: Service,
+    execution_listener: ExecutionListener,
+    audit_report: AuditResult,
 ) -> list[str]:
     lines: list[str] = []
 
     item_names = ContainerItemNames()
 
-    image_alerts_fmt = format_alerts_single_line(
-        audit_report, AuditAlertLocation.service(c.name).image()
-    )
+    # Title (1. Container Name)
 
     container_number_fmt: str = "" + str(container_number) + "."
-    lines.append(
-        f"{container_number_fmt:<2} {c.name} ({image_str(c.image, image_alerts_fmt)})"
+
+    container_evts: list[ExecutionEvtContainer] = []
+    for evt in execution_listener.get_events():
+        if (
+            isinstance(evt, ExecutionEvtContainer)
+            and evt.container_id == c.container_name_safe()
+        ):
+            container_evts.append(evt)
+    container_evt_summary = " → ".join(container_evt_summaries(container_evts))
+
+    lines.append(f"{container_number_fmt:<2} {c.name}")
+    if container_evt_summary:
+        lines.extend(item_names.format(item_names.container, [container_evt_summary]))
+
+    # Image
+
+    image_evts: list[ExecutionEvtImage] = []
+    for evt in execution_listener.get_events():
+        if isinstance(evt, ExecutionEvtImage) and evt.image_id == c.image:
+            image_evts.append(evt)
+
+    image_evt_summary = " → ".join(image_evt_summaries(image_evts))
+    image_lines = [c.image + " " + image_evt_summary]
+    image_lines += tab_messages(
+        to_formatted_alert_list(
+            audit_report.query(AuditAlertLocation.service(c.name).image())
+        )
     )
+
+    lines.extend(item_names.format(item_names.image, image_lines))
+
+    # Network
+
     if c.network:
         lines.extend(item_names.format(item_names.network, [c.network]))
+
+    # Ports
 
     if c.ports:
         port_lines: list[str] = []
@@ -169,6 +213,8 @@ def report_container(
             else:
                 port_lines.append(f"{p.container_port}/{p.protocol}")
         lines.extend(item_names.format(item_names.ports, [", ".join(port_lines)]))
+
+    # Mounts (volumes)
 
     if c.volumes:
         volume_lines: list[str] = []
@@ -186,33 +232,41 @@ def report_container(
             )
             volume_lines.append(f"{vol.target} → ({vol.type()}) {source} {rw}")
             location = AuditAlertLocation.service(c.name).mount(vol.id)
-            alerts = to_formatted_alert_list(audit_report.query(location))
-            for alert in alerts:
-                volume_lines.append(f"     {alert}")
+            volume_lines += tab_messages(
+                to_formatted_alert_list(audit_report.query(location))
+            )
         lines.extend(item_names.format(item_names.mounts, volume_lines))
+
+    # Environment variables
 
     if c.environment:
         environment_lines: list[str] = []
         for env_key, env_value in c.environment.items():
             location = AuditAlertLocation.service(c.name).environment(env_key)
-            alerts = to_formatted_alert_list(audit_report.query(location))
             environment_lines.append(f"{env_key}={env_value}")
-            for alert in alerts:
-                environment_lines.append(f"     {alert}")
+            environment_lines += tab_messages(
+                to_formatted_alert_list(audit_report.query(location))
+            )
         lines.extend(item_names.format(item_names.environment, environment_lines))
+
+    # Dependencies
 
     for dependency_name in c.depends_on:
         depends_on_lines: list[str] = []
         depends_on_lines.append(dependency_name)
         location = AuditAlertLocation.service(c.name).depends_on(dependency_name)
-        alerts = to_formatted_alert_list(audit_report.query(location))
-        for alert in alerts:
-            depends_on_lines.append(f"     {alert}")
+        depends_on_lines += tab_messages(
+            to_formatted_alert_list(audit_report.query(location))
+        )
         lines.extend(item_names.format(item_names.depends_on, depends_on_lines))
+
+    # Commands
 
     if c.command:
         cmd = " ".join(c.command)
         lines.extend(item_names.format(item_names.commands, [cmd]))
+
+    # Healthcheck
 
     healthcheck = c.healthcheck
     name = None if healthcheck is None else healthcheck.summary()
@@ -223,6 +277,8 @@ def report_container(
     healthcheck_lines_safe = [line for line in healthcheck_lines if line is not None]
     lines.extend(item_names.format(item_names.healthcheck, healthcheck_lines_safe))
 
+    # Labels
+
     label_lines: list[str] = []
     for name, value in c.labels.items():
         label_lines.append(name + "=" + value)
@@ -231,26 +287,36 @@ def report_container(
     return lines
 
 
-def format_alerts_single_line(
-    audit_report: AuditResult, location: AuditAlertLocation
-) -> str:
-    alert_list = audit_report.query(location)
-    alert_fmt_list = to_formatted_alert_list(alert_list)
-    alert_msg = ", ".join(alert_fmt_list)
-    return alert_msg
+def container_evt_summaries(evts: list[ExecutionEvtContainer]) -> list[str]:
+    summaries: list[str] = []
+    for evt in evts:
+        if isinstance(evt, ExecutionEvtContainerExistsCheck):
+            if evt.exists is None:
+                summaries.append("🟤 unknown")
+            elif evt.exists == True:
+                summaries.append("🟢 exists")
+            else:
+                summaries.append("⚫ missing")
+        elif isinstance(evt, ExecutionEvtContainerRemoved):
+            summaries.append("🔴 removed")
+        elif isinstance(evt, ExecutionEvtContainerRun):
+            summaries.append("🟢 run")
+    return summaries
 
 
-def to_formatted_alert_list(alerts: list[AuditAlert]) -> list[str]:
-    return [to_formatted_alert(alert) for alert in alerts]
-
-
-def to_formatted_alert(alert: AuditAlert) -> str:
-    emoji_map = {
-        AuditAlertType.CRITICAL: "❌",
-        AuditAlertType.WARN: "⚠️",
-        AuditAlertType.INFO: "🛈",
-    }
-    return (emoji_map[alert.severity] or "") + "  " + alert.message
+def image_evt_summaries(evts: list[ExecutionEvtImage]) -> list[str]:
+    summaries: list[str] = []
+    for evt in evts:
+        if isinstance(evt, ExecutionEvtImageExistsCheck):
+            if evt.exists is None:
+                summaries.append("🟤 unknown")
+            elif evt.exists == True:
+                summaries.append("🟢 exists")
+            else:
+                summaries.append("⚫ missing")
+        elif isinstance(evt, ExecutionEvtImagePull):
+            summaries.append("📥 pulled")
+    return summaries
 
 
 def volume_evt_summaries(evts: list[ExecutionEvtVolume]) -> list[str]:
@@ -259,7 +325,7 @@ def volume_evt_summaries(evts: list[ExecutionEvtVolume]) -> list[str]:
         if isinstance(evt, ExecutionEvtVolumeExistsCheck):
             if evt.exists is None:
                 summaries.append("🟤 unknown")
-            if evt.exists == True:
+            elif evt.exists == True:
                 summaries.append("🟢 exists")
             else:
                 summaries.append("⚫ missing")
@@ -283,7 +349,7 @@ def network_evt_summaries(evts: list[ExecutionEvtNetwork]) -> list[str]:
         if isinstance(evt, ExecutionEvtNetworkExistsCheck):
             if evt.exists is None:
                 summaries.append("🟤 unknown")
-            if evt.exists == True:
+            elif evt.exists == True:
                 summaries.append("🟢 exists")
             else:
                 summaries.append("⚫ missing")
@@ -298,5 +364,28 @@ def network_evt_summaries(evts: list[ExecutionEvtNetwork]) -> list[str]:
     return summaries
 
 
-def image_str(image: str, image_alerts_fmt: str) -> str:
-    return " ".join(part for part in ["image:", image, image_alerts_fmt] if part != "")
+# -----------------------------------------------------------------------------
+# Tabulations
+# -----------------------------------------------------------------------------
+
+
+def tab_messages(msg: list[str]) -> list[str]:
+    return ["  " + message for message in msg]
+
+
+# -----------------------------------------------------------------------------
+# Alerts formatting
+# -----------------------------------------------------------------------------
+
+
+def to_formatted_alert_list(alerts: list[AuditAlert]) -> list[str]:
+    return [to_formatted_alert(alert) for alert in alerts]
+
+
+def to_formatted_alert(alert: AuditAlert) -> str:
+    emoji_map = {
+        AuditAlertType.CRITICAL: "❌",
+        AuditAlertType.WARN: "⚠️ ",
+        AuditAlertType.INFO: "🛈",
+    }
+    return (emoji_map[alert.severity] or "") + " " + alert.message

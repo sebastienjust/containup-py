@@ -124,12 +124,14 @@ def _add_dry_run(parser: argparse.ArgumentParser) -> None:
         help="Launch command in dry-run mode (simulation). Defaults to false.",
     )
 
+
 def _add_live_check(parser: argparse.ArgumentParser) -> None:
     parser.add_argument(
         "--live-check",
         action="store_true",
         help="Only available if dry-run mode is active. When specified tells to check operations against a live system.",
     )
+
 
 def _add_extra_args(parser: argparse.ArgumentParser) -> None:
     parser.add_argument(

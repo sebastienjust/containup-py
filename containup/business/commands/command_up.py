@@ -7,7 +7,18 @@ from containup.business.commands.container_operator import (
     ContainerOperatorException,
 )
 from containup.business.commands.user_interactions import UserInteractions
-from containup.business.execution_listener import ExecutionEvtContainerExistsCheck, ExecutionEvtContainerRemoved, ExecutionEvtContainerRun, ExecutionEvtImagExistsCheck, ExecutionEvtImagePull, ExecutionEvtNetworkCreated, ExecutionEvtNetworkExistsCheck, ExecutionEvtVolumeCreated, ExecutionEvtVolumeExistsCheck, ExecutionListener
+from containup.business.execution_listener import (
+    ExecutionEvtContainerExistsCheck,
+    ExecutionEvtContainerRemoved,
+    ExecutionEvtContainerRun,
+    ExecutionEvtImageExistsCheck,
+    ExecutionEvtImagePull,
+    ExecutionEvtNetworkCreated,
+    ExecutionEvtNetworkExistsCheck,
+    ExecutionEvtVolumeCreated,
+    ExecutionEvtVolumeExistsCheck,
+    ExecutionListener,
+)
 from containup.stack.service import Service
 from containup.stack.service_healthcheck import HealthcheckOptions
 from containup.stack.stack import Stack
@@ -24,6 +35,7 @@ class CommandUp:
         dry_run (bool): we don't do any changes to the system
         live_check (bool): in dry run, we try to check if real things exists
     """
+
     def __init__(
         self,
         stack: Stack,
@@ -31,12 +43,12 @@ class CommandUp:
         system_interactions: UserInteractions,
         auditor: ExecutionListener,
         dry_run: bool,
-        live_check: bool
+        live_check: bool,
     ):
         self.stack = stack
         self.operator = operator
         self._system_interactions = system_interactions
-        self._system_read = live_check if dry_run else True 
+        self._system_read = live_check if dry_run else True
         self._system_write = not dry_run
         self._auditor = auditor
 
@@ -54,8 +66,10 @@ class CommandUp:
                 exists: Optional[bool] = None
                 if self._system_read:
                     exists = self.operator.container_exists(container_name)
-                self._auditor.record(ExecutionEvtContainerExistsCheck(container_name, exists))
-                
+                self._auditor.record(
+                    ExecutionEvtContainerExistsCheck(container_name, exists)
+                )
+
                 if exists:
                     logger.info(f"Container {container_name} exists... removing")
                     if self._system_write:
@@ -66,7 +80,7 @@ class CommandUp:
 
             for service in services:
                 container_name = service.container_name or service.name
-                
+
                 if self._system_write:
                     logger.info(f"Run container {container_name} : start")
                     self.operator.container_run(self.stack.name, service)
@@ -92,7 +106,7 @@ class CommandUp:
 
     def _ensure_volume(self, vol: Volume):
         logger.debug(f"Volume {vol.name}: checking if exists")
-        
+
         exists: Optional[bool] = None
         if self._system_read:
             exists = self.operator.volume_exists(vol.name)
@@ -109,14 +123,14 @@ class CommandUp:
 
     def _ensure_networks(self):
         for net in self.stack.networks:
-            self._ensure_network(net)            
+            self._ensure_network(net)
 
-    def _ensure_network(self, net:Network):
+    def _ensure_network(self, net: Network):
         logger.debug(f"Network {net.name}: checking if exists")
-        exists: Optional[bool] = None 
+        exists: Optional[bool] = None
         if self._system_read:
             exists = self.operator.network_exists(net.name)
-        self._auditor.record(ExecutionEvtNetworkExistsCheck(net.name, exists))            
+        self._auditor.record(ExecutionEvtNetworkExistsCheck(net.name, exists))
 
         if not exists:
             logger.debug(f"Network {net.name}: create network")
@@ -138,8 +152,8 @@ class CommandUp:
         exists: Optional[bool] = None
         if self._system_read:
             exists = self.operator.image_exists(image)
-        self._auditor.record(ExecutionEvtImagExistsCheck(image, exists))            
-        
+        self._auditor.record(ExecutionEvtImageExistsCheck(image, exists))
+
         logger.debug(f"Image {image}: exists={exists}")
         if not exists:
             logger.debug(f"Image {image}: pulling")
@@ -148,9 +162,16 @@ class CommandUp:
                 self.operator.image_pull(image)
 
     def _container_wait_healthy(self, service: Service) -> None:
+
+        # We don't want to do that in dry-run mode
+        if not self._system_write:
+            return
+
+        # If no healthcheck defined, do nothing
         healthcheck = service.healthcheck
         if healthcheck is None or isinstance(healthcheck, NoneHealthcheck):
             return
+
         options = getattr(service.healthcheck, "options", None)
         opts: HealthcheckOptions = options or HealthcheckOptions()
         interval: float = duration_to_seconds(opts.interval or "1s")

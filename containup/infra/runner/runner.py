@@ -55,7 +55,13 @@ class StackRunner:
                 live_check=self.config.live_check,
             ).up(self.config.services)
         elif self.config.command == "down":
-            CommandDown(self.stack, self.operator).down(self.config.services)
+            CommandDown(
+                stack=self.stack,
+                operator=self.operator,
+                auditor=self._execution_listener,
+                dry_run=self.config.dry_run,
+                live_check=self.config.live_check,
+            ).down(self.config.services)
         else:
             raise RuntimeError(f"Unrecognized command {self.config.command}")
         if self.config.dry_run:
