@@ -44,7 +44,7 @@ class Config:
     @property
     def services(self) -> list[str]:
         """Returns service as list or empty list"""
-        return self._args.service or []
+        return cast(list[str], getattr(self._args, "service", []) or [])
 
     @property
     def dry_run(self) -> bool:
@@ -93,6 +93,12 @@ def containup_cli_args(prog: str, known_args: list[str]) -> Config:
     )
     subparsers = parser.add_subparsers(dest="command", required=True)
 
+    # check
+    check_parser = subparsers.add_parser("check", help="Check the stack")
+    _add_live_check(check_parser)
+    _add_extra_args(check_parser)
+
+    # up
     up_parser = subparsers.add_parser("up")
     _add_dry_run(up_parser)
     _add_live_check(up_parser)
@@ -103,6 +109,7 @@ def containup_cli_args(prog: str, known_args: list[str]) -> Config:
     )
     _add_extra_args(up_parser)
 
+    # down
     down_parser = subparsers.add_parser("down")
     _add_dry_run(down_parser)
     _add_live_check(down_parser)

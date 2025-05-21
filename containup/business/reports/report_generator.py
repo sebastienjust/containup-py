@@ -17,6 +17,7 @@ class ReportGenerator:
         listener: ExecutionListener,
         alerts: AuditResult,
         stack_state: StackState,
+        live_operations: bool,
     ) -> str:
         report: str = report_standard(
             execution_listener=listener,
@@ -24,5 +25,6 @@ class ReportGenerator:
             config=config,
             audit_report=alerts,
             state=stack_state,
+            live_operations=live_operations,
         )
         return report
