@@ -105,7 +105,7 @@ class DockerOperator(ContainerOperator):
 
             # create the container
             logger.info(f"Container {container_name}: create")
-            container = self.client.containers.create(
+            container = self.client.containers.create( # type: ignore
                 image=service.image,
                 command=service.command,
                 name=container_name,
