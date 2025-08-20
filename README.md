@@ -21,6 +21,8 @@ Containup isn’t a replacement for Compose. It’s what you reach for when Comp
 > [!IMPORTANT]  
 > ⚠️ This project is under active development — the API may change frequently.
 
+
+
 ## Summary
 
 ❌ With Compose YAML
@@ -200,7 +202,7 @@ python -m venv .venv
 source .venv/bin/activate  # Unix/macOS
 ## .venv\Scripts\activate    # Windows
 pip install --upgrade pip
-pip install git+https://github.com/sebastienjust/containup-py.git
+pip install containup
 ```
 
 ### Script example
